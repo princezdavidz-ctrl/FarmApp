@@ -8,7 +8,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'api.dart';
 
-void main() => runApp(const PigWorldDriversApp());
+void main() => runApp(const FarmAppDriverApp());
 
 enum DriverPage { welcome, register, pending, login, otp, plans, payment, home }
 
@@ -494,14 +494,14 @@ class DriverController extends ChangeNotifier {
   }
 }
 
-class PigWorldDriversApp extends StatefulWidget {
-  const PigWorldDriversApp({super.key});
+class FarmAppDriverApp extends StatefulWidget {
+  const FarmAppDriverApp({super.key});
 
   @override
-  State<PigWorldDriversApp> createState() => _PigWorldDriversAppState();
+  State<FarmAppDriverApp> createState() => _FarmAppDriverAppState();
 }
 
-class _PigWorldDriversAppState extends State<PigWorldDriversApp> {
+class _FarmAppDriverAppState extends State<FarmAppDriverApp> {
   late final DriverController controller;
 
   @override
