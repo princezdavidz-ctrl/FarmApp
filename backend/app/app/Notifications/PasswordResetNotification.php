@@ -30,7 +30,7 @@ class PasswordResetNotification extends Notification
             ], '', '&', PHP_QUERY_RFC3986);
 
         return (new MailMessage)
-            ->subject('Reset your Farm App password')
+            ->subject('Reset your FarmApp password')
             ->view('emails.auth.password-reset', [
                 'name' => $notifiable->name ?: 'there',
                 'resetUrl' => $resetUrl,
