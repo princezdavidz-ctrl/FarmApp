@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#176b4d">
-    <title>{{ $success ? 'Password updated' : 'Reset password' }} · Farm App</title>
+    <title>{{ $success ? 'Password updated' : 'Reset password' }} · FarmApp</title>
     <style>
         :root{color-scheme:light;--green:#176b4d;--green-dark:#124c39;--ink:#183426;--muted:#65766a;--line:#dce7dc;--surface:#f5f8f4;--danger:#a33e3e;--success:#267348;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--surface)}
         *{box-sizing:border-box}
@@ -43,15 +43,15 @@
 <body>
 <main class="card">
     <header class="brand">
-        <div><div class="brand-name">Farm App</div><div class="brand-caption">Farm management, made simpler</div></div>
+        <div><div class="brand-name">FarmApp</div><div class="brand-caption">Farm management, made simpler</div></div>
     </header>
 
     <div class="eyebrow">Account security</div>
     <h1>{{ $success ? 'Password updated' : 'Set a new password' }}</h1>
     @if ($success)
         <p class="success" role="status">{{ $status }}</p>
-        <p>Your new password is ready to use in the Farm App app.</p>
-        <p class="footer"><a href="/">Return to Farm App</a></p>
+        <p>Your new password is ready to use in the FarmApp.</p>
+        <p class="footer"><a href="/">Return to FarmApp</a></p>
     @else
         <p class="intro">Create a new password for your account. For your security, this reset link expires after 60 minutes.</p>
         @if ($status)<div class="error" role="alert">{{ $status }}</div>@endif
@@ -80,7 +80,7 @@
             </div>
             <button class="submit" type="submit">Save new password</button>
         </form>
-        <p class="footer"><a href="/">Back to Farm App</a></p>
+        <p class="footer"><a href="/">Back to FarmApp</a></p>
     @endif
     <p class="help">If you did not request this change, you can safely ignore this page.</p>
 </main>
