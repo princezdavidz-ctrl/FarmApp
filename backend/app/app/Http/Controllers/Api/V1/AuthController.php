@@ -93,6 +93,7 @@ class AuthController extends Controller
                     'farming_type' => $data['farming_type'] ?? 'mixed',
                     'production_types' => $data['production_types'] ?? [],
                     'mother_pig_count' => $data['mother_pig_count'] ?? 0,
+                    'piglet_groups' => $data['piglet_groups'] ?? [],
                     'pregnant_pig_count' => $data['pregnant_pig_count'] ?? 0,
                 ])
                 : (isset($data['invite_code'])

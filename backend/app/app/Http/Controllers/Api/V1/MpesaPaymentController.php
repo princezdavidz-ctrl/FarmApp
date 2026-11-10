@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
 use App\Exceptions\MpesaGatewayException;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Farm\StoreMpesaPaymentRequest;
+use App\Models\DriverPayment;
 use App\Models\Farm;
 use App\Models\Payment;
-use App\Models\DriverPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\SupplierPayment;
 use App\Models\VeterinaryPayment;
 use App\Services\Payments\MpesaService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Client\ConnectionException;
 use RuntimeException;
 use Throwable;
 
@@ -105,7 +105,7 @@ class MpesaPaymentController extends Controller
         return response()->json(['payment' => $payment->fresh()], 201);
     }
 
-    public function callback(Request $request): JsonResponse
+    public function callback(Request $request, MpesaService $mpesa): JsonResponse
     {
         $secret = config('services.mpesa.callback_secret');
         abort_unless(
@@ -116,8 +116,11 @@ class MpesaPaymentController extends Controller
         );
 
         $callback = $request->input('Body.stkCallback', []);
+        if (! is_array($callback)) {
+            return response()->json(['message' => 'Invalid payment callback.'], 422);
+        }
+
         $checkoutId = $callback['CheckoutRequestID'] ?? null;
-        $resultCode = (int) ($callback['ResultCode'] ?? 1);
         $payment = $checkoutId
             ? (Payment::where('checkout_request_id', $checkoutId)->first()
                 ?? VeterinaryPayment::where('checkout_request_id', $checkoutId)->first()
@@ -129,13 +132,58 @@ class MpesaPaymentController extends Controller
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
         }
 
-        DB::transaction(function () use ($payment, $callback, $resultCode): void {
-            if ($payment->status === 'paid') {
+        if ($payment->status === 'paid') {
+            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
+        }
+
+        try {
+            $providerResultCode = $mpesa->queryResultCode($payment);
+        } catch (Throwable $exception) {
+            Log::warning('Could not verify an M-Pesa callback with Safaricom.', [
+                'payment_id' => $payment->id,
+                'payment_type' => class_basename($payment),
+                'farm_id' => $payment instanceof Payment ? $payment->farm_id : null,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Payment verification is temporarily unavailable.'], 503);
+        }
+
+        $resultCode = filter_var($callback['ResultCode'] ?? null, FILTER_VALIDATE_INT);
+        if ($resultCode === false || $resultCode !== $providerResultCode) {
+            Log::warning('Rejected an M-Pesa callback that did not match provider verification.', [
+                'payment_id' => $payment->id,
+                'payment_type' => class_basename($payment),
+                'farm_id' => $payment instanceof Payment ? $payment->farm_id : null,
+            ]);
+
+            return response()->json(['message' => 'Payment callback could not be verified.'], 422);
+        }
+
+        $metadata = collect($callback['CallbackMetadata']['Item'] ?? [])
+            ->filter(fn ($item): bool => is_array($item) && isset($item['Name']))
+            ->keyBy('Name');
+        $receipt = data_get($metadata->get('MpesaReceiptNumber'), 'Value');
+        if ($resultCode === 0 &&
+            ((int) data_get($metadata->get('Amount'), 'Value', -1) !== (int) ceil((float) $payment->amount) ||
+                blank($receipt))) {
+            Log::warning('Rejected an incomplete or mismatched successful M-Pesa callback.', [
+                'payment_id' => $payment->id,
+                'payment_type' => class_basename($payment),
+                'farm_id' => $payment instanceof Payment ? $payment->farm_id : null,
+            ]);
+
+            return response()->json(['message' => 'Payment callback could not be verified.'], 422);
+        }
+
+        DB::transaction(function () use ($payment, $callback, $resultCode, $receipt): void {
+            $lockedPayment = $payment::query()->lockForUpdate()->find($payment->id);
+            if ($lockedPayment === null || $lockedPayment->status === 'paid') {
                 return;
             }
 
             if ($resultCode !== 0) {
-                $payment->update([
+                $lockedPayment->update([
                     'status' => 'failed',
                     'result_description' => $callback['ResultDesc'] ?? 'Payment failed.',
                 ]);
@@ -143,45 +191,44 @@ class MpesaPaymentController extends Controller
                 return;
             }
 
-            $items = collect($callback['CallbackMetadata']['Item'] ?? [])->keyBy('Name');
-            $payment->update([
+            $lockedPayment->update([
                 'status' => 'paid',
-                'mpesa_receipt' => $items->get('MpesaReceiptNumber')['Value'] ?? null,
+                'mpesa_receipt' => $receipt,
                 'result_description' => $callback['ResultDesc'] ?? 'Payment received.',
                 'paid_at' => now(),
             ]);
-            if ($payment instanceof DriverPayment) {
-                $profile = $payment->driverProfile;
+            if ($lockedPayment instanceof DriverPayment) {
+                $profile = $lockedPayment->driverProfile;
                 $now = now();
                 $base = $profile->subscription_expires_at?->isFuture()
                     ? $profile->subscription_expires_at->copy()
                     : $now;
                 $profile->update([
                     'subscription_paid_at' => $now,
-                    'subscription_expires_at' => $base->addDays(max($payment->duration_days, 1)),
+                    'subscription_expires_at' => $base->addDays(max($lockedPayment->duration_days, 1)),
                 ]);
-            } elseif ($payment instanceof VeterinaryPayment) {
-                $profile = $payment->veterinarianProfile;
+            } elseif ($lockedPayment instanceof VeterinaryPayment) {
+                $profile = $lockedPayment->veterinarianProfile;
                 $now = now();
                 $base = $profile->subscription_expires_at?->isFuture()
                     ? $profile->subscription_expires_at->copy()
                     : $now;
                 $profile->update([
                     'subscription_paid_at' => $now,
-                    'subscription_expires_at' => $base->addDays(max($payment->duration_days, 1)),
+                    'subscription_expires_at' => $base->addDays(max($lockedPayment->duration_days, 1)),
                 ]);
-            } elseif ($payment instanceof SupplierPayment) {
-                $profile = $payment->supplierProfile;
+            } elseif ($lockedPayment instanceof SupplierPayment) {
+                $profile = $lockedPayment->supplierProfile;
                 $now = now();
                 $base = $profile->subscription_expires_at?->isFuture()
                     ? $profile->subscription_expires_at->copy()
                     : $now;
                 $profile->update([
                     'subscription_paid_at' => $now,
-                    'subscription_expires_at' => $base->addDays(max($payment->duration_days, 1)),
+                    'subscription_expires_at' => $base->addDays(max($lockedPayment->duration_days, 1)),
                 ]);
             } else {
-                $payment->farm()->update(['subscription_plan' => $payment->plan_code]);
+                $lockedPayment->farm()->update(['subscription_plan' => $lockedPayment->plan_code]);
             }
         });
 

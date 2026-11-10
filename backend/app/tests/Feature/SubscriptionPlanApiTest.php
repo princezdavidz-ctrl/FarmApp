@@ -84,6 +84,37 @@ class SubscriptionPlanApiTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_farm_owner_cannot_mutate_the_global_plan_catalog(): void
+    {
+        $owner = User::factory()->create(['role' => 'farmOwner']);
+        $plan = SubscriptionPlan::create([
+            'code' => 'starter',
+            'name' => 'Starter',
+            'amount' => 10,
+            'currency' => 'USD',
+            'active' => true,
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->postJson('/api/v1/subscription-plans', [
+                'code' => 'owner_plan',
+                'name' => 'Owner Plan',
+                'amount' => 10,
+                'currency' => 'USD',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($owner, 'sanctum')
+            ->patchJson("/api/v1/subscription-plans/{$plan->id}", ['name' => 'Changed'])
+            ->assertForbidden();
+
+        $this->actingAs($owner, 'sanctum')
+            ->deleteJson("/api/v1/subscription-plans/{$plan->id}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('subscription_plans', ['id' => $plan->id, 'name' => 'Starter', 'active' => true]);
+    }
+
     public function test_normal_plan_viewers_only_see_active_plans_and_managers_can_retire_them(): void
     {
         $manager = User::factory()->create(['crm_role' => 'admin']);

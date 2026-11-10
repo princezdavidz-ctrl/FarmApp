@@ -26,6 +26,7 @@ class SubscriptionPlanController extends Controller
     {
         $this->authorizePlanManagement($request);
         $plan = SubscriptionPlan::create([...$request->validated(), 'currency' => strtoupper($request->string('currency')->toString())]);
+
         return response()->json(['data' => new SubscriptionPlanResource($plan)], 201);
     }
 
@@ -33,8 +34,11 @@ class SubscriptionPlanController extends Controller
     {
         $this->authorizePlanManagement($request);
         $data = $request->validated();
-        if (isset($data['currency'])) $data['currency'] = strtoupper($data['currency']);
+        if (isset($data['currency'])) {
+            $data['currency'] = strtoupper($data['currency']);
+        }
         $subscriptionPlan->update($data);
+
         return response()->json(['data' => new SubscriptionPlanResource($subscriptionPlan->fresh())]);
     }
 
@@ -42,6 +46,7 @@ class SubscriptionPlanController extends Controller
     {
         $this->authorizePlanManagement($request);
         $subscriptionPlan->update(['active' => false]);
+
         return response()->json(null, 204);
     }
 
@@ -55,7 +60,7 @@ class SubscriptionPlanController extends Controller
     private function authorizePlanManagement(Request $request): void
     {
         if (! $this->canManagePlans($request)) {
-            abort(403, 'Only farm owners and CRM admin/finance staff can manage subscription plans.');
+            abort(403, 'Only CRM admin or finance staff can manage subscription plans.');
         }
     }
 
@@ -76,7 +81,6 @@ class SubscriptionPlanController extends Controller
     {
         $user = $request->user();
 
-        return $user->role === 'farmOwner'
-            || in_array($user->crm_role, ['admin', 'finance'], true);
+        return in_array($user->crm_role, ['admin', 'finance'], true);
     }
 }

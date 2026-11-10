@@ -76,6 +76,7 @@ class FirebasePushServiceTest extends TestCase
             && $request->hasHeader('Authorization', 'Bearer test-access-token')
             && $request->data()['message']['token'] === 'device-token'
             && $request->data()['message']['notification']['title'] === 'Farm alert'
+            && $request->data()['message']['android']['notification']['sound'] === 'default'
             && $request->data()['message']['data']['notification_id'] === '17'
             && $request->data()['message']['data']['action_route'] === '/support');
     }

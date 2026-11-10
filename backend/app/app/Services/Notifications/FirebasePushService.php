@@ -50,7 +50,13 @@ class FirebasePushService
                             'notification_id' => (string) $notification->id,
                             'action_route' => (string) ($notification->action_route ?? '/notifications'),
                         ],
-                        'android' => ['priority' => 'high'],
+                        'android' => [
+                            'priority' => 'high',
+                            'notification' => [
+                                'channel_id' => 'farm_push_notifications',
+                                'sound' => 'default',
+                            ],
+                        ],
                         'apns' => [
                             'headers' => ['apns-priority' => '10'],
                             'payload' => ['aps' => ['sound' => 'default']],

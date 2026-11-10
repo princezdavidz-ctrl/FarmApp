@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Farm;
 use App\Models\Payment;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -50,5 +51,45 @@ class FarmBillingApiTest extends TestCase
         Sanctum::actingAs($worker);
 
         $this->getJson("/api/v1/farms/{$farm->id}/payments")->assertForbidden();
+    }
+
+    public function test_farm_owner_cannot_select_a_paid_plan_without_successful_payment(): void
+    {
+        $owner = User::factory()->create(['role' => 'farmOwner']);
+        $farm = Farm::create(['name' => 'Unpaid Plan Farm']);
+        $owner->farms()->attach($farm);
+        $plan = SubscriptionPlan::create([
+            'code' => 'premium',
+            'name' => 'Premium',
+            'amount' => 100,
+            'currency' => 'KES',
+            'active' => true,
+        ]);
+        Sanctum::actingAs($owner);
+
+        $this->patchJson("/api/v1/farms/{$farm->id}/subscription", ['plan' => $plan->code])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseHas('farms', ['id' => $farm->id, 'subscription_plan' => null]);
+    }
+
+    public function test_farm_owner_can_select_a_free_plan_without_payment(): void
+    {
+        $owner = User::factory()->create(['role' => 'farmOwner']);
+        $farm = Farm::create(['name' => 'Free Plan Farm']);
+        $owner->farms()->attach($farm);
+        $plan = SubscriptionPlan::create([
+            'code' => 'free',
+            'name' => 'Free',
+            'amount' => 0,
+            'currency' => 'KES',
+            'active' => true,
+        ]);
+        Sanctum::actingAs($owner);
+
+        $this->patchJson("/api/v1/farms/{$farm->id}/subscription", ['plan' => $plan->code])
+            ->assertOk();
+
+        $this->assertDatabaseHas('farms', ['id' => $farm->id, 'subscription_plan' => $plan->code]);
     }
 }

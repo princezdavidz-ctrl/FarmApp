@@ -74,6 +74,8 @@ class AuthApiTest extends TestCase
             ->assertJsonPath('user.phone', '+254712345678')
             ->assertJsonPath('farms.0.name', 'Mobile Farm')
             ->assertJsonPath('farms.0.mother_pig_count', 12)
+            ->assertJsonPath('farms.0.piglet_groups.0.count', 8)
+            ->assertJsonPath('farms.0.piglet_groups.0.age_months', 3)
             ->assertJsonPath('farms.0.pregnant_pig_count', 4);
     }
 
@@ -167,6 +169,14 @@ class AuthApiTest extends TestCase
         $migration->up();
         $migration->up();
 
+        foreach ([
+            'mother_pig_count',
+            'piglet_groups',
+            'pregnant_pig_count',
+        ] as $column) {
+            $this->assertTrue(Schema::hasColumn('farms', $column), "Missing farms.$column");
+        }
+
         $this->postJson('/api/v1/auth/register', [
             'name' => 'Repaired Owner',
             'email' => 'repaired-owner@example.com',
@@ -178,6 +188,19 @@ class AuthApiTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('user.phone', '+15551234568')
             ->assertJsonPath('farms.0.name', 'Repaired Farm');
+    }
+
+    public function test_subscription_plan_repair_migration_restores_a_missing_farm_column(): void
+    {
+        Schema::table('farms', function (Blueprint $table): void {
+            $table->dropColumn('subscription_plan');
+        });
+
+        $migration = require database_path('migrations/2026_10_27_000001_repair_farm_subscription_plan_column.php');
+        $migration->up();
+        $migration->up();
+
+        $this->assertTrue(Schema::hasColumn('farms', 'subscription_plan'));
     }
 
     public function test_farm_owner_can_register_only_one_farm_per_account(): void

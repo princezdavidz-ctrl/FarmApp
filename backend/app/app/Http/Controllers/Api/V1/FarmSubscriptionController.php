@@ -59,6 +59,18 @@ class FarmSubscriptionController extends Controller
             abort(422, 'This subscription plan is not available.');
         }
 
+        if ((float) $plan->amount > 0) {
+            $hasSuccessfulPayment = Payment::query()
+                ->where('farm_id', $farm->id)
+                ->where('plan_code', $plan->code)
+                ->where('status', 'paid')
+                ->where('currency', $plan->currency)
+                ->where('amount', '>=', $plan->amount)
+                ->exists();
+
+            abort_unless($hasSuccessfulPayment, 422, 'A successful payment is required for this subscription plan.');
+        }
+
         $farm->update(['subscription_plan' => $plan->code]);
 
         return response()->json(['farm' => new FarmResource($farm->fresh())]);

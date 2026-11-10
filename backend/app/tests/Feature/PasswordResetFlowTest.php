@@ -45,6 +45,11 @@ class PasswordResetFlowTest extends TestCase
             );
             $this->assertStringContainsString($plainToken, $mail->viewData['resetUrl']);
             $this->assertStringContainsString(rawurlencode($user->email), $mail->viewData['resetUrl']);
+            $renderedMail = view($mail->view, $mail->viewData)->render();
+            $this->assertStringContainsString(
+                'href="'.htmlspecialchars($mail->viewData['resetUrl'], ENT_QUOTES, 'UTF-8').'"',
+                $renderedMail,
+            );
 
             return true;
         });

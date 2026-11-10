@@ -98,6 +98,11 @@ class AnimalDriverApiTest extends TestCase
     {
         Http::fake([
             'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'access-token']),
+            'sandbox.safaricom.co.ke/mpesa/stkpushquery/*' => Http::response([
+                'ResponseCode' => '0',
+                'CheckoutRequestID' => 'driver-checkout-1',
+                'ResultCode' => '0',
+            ]),
             'sandbox.safaricom.co.ke/mpesa/*' => Http::response([
                 'ResponseCode' => '0',
                 'MerchantRequestID' => 'driver-merchant-1',
@@ -150,6 +155,7 @@ class AnimalDriverApiTest extends TestCase
             'ResultCode' => 0,
             'ResultDesc' => 'Payment received.',
             'CallbackMetadata' => ['Item' => [
+                ['Name' => 'Amount', 'Value' => 500],
                 ['Name' => 'MpesaReceiptNumber', 'Value' => 'DRV123456'],
             ]],
         ]]];

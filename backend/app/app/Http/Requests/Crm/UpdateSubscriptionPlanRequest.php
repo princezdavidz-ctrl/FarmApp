@@ -12,7 +12,7 @@ class UpdateSubscriptionPlanRequest extends FormRequest
         $user = $this->user();
 
         return $user !== null
-            && ($user->role === 'farmOwner' || in_array($user->crm_role, ['admin', 'finance'], true));
+            && in_array($user->crm_role, ['admin', 'finance'], true);
     }
 
     public function rules(): array

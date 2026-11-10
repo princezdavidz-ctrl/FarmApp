@@ -276,7 +276,19 @@ class MpesaPaymentApiTest extends TestCase
 
     public function test_successful_callback_activates_the_plan_and_is_idempotent(): void
     {
-        config(['services.mpesa.callback_secret' => 'test-callback-secret-12345678901234567890']);
+        Http::fake([
+            'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'access-token']),
+            'sandbox.safaricom.co.ke/mpesa/stkpushquery/*' => Http::response([
+                'ResponseCode' => '0',
+                'CheckoutRequestID' => 'checkout-2',
+                'ResultCode' => '0',
+            ]),
+        ]);
+        config(['services.mpesa' => [
+            'environment' => 'sandbox', 'consumer_key' => 'key', 'consumer_secret' => 'secret',
+            'shortcode' => '174379', 'passkey' => 'passkey',
+            'callback_secret' => 'test-callback-secret-12345678901234567890',
+        ]]);
         $user = User::factory()->create(['role' => 'farmOwner', 'phone' => '254712345678']);
         $farm = Farm::create(['name' => 'Paid Farm', 'mother_pig_count' => 10]);
         $payment = Payment::create([
@@ -290,14 +302,92 @@ class MpesaPaymentApiTest extends TestCase
             'CheckoutRequestID' => 'checkout-2', 'ResultCode' => 0,
             'ResultDesc' => 'The service request is processed successfully.',
             'CallbackMetadata' => ['Item' => [
+                ['Name' => 'Amount', 'Value' => 100],
                 ['Name' => 'MpesaReceiptNumber', 'Value' => 'ABC123'],
             ]],
         ]]];
 
-        $this->postJson('/api/v1/payments/mpesa/callback?callback_token=test-callback-secret-12345678901234567890', $payload)->assertOk();
-        $this->postJson('/api/v1/payments/mpesa/callback?callback_token=test-callback-secret-12345678901234567890', $payload)->assertOk();
+        $callbackUrl = '/api/v1/payments/mpesa/callback?callback_token=test-callback-secret-12345678901234567890';
+        $this->postJson($callbackUrl, $payload)->assertOk();
+        $this->postJson($callbackUrl, $payload)->assertOk();
 
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'paid', 'mpesa_receipt' => 'ABC123']);
         $this->assertDatabaseHas('farms', ['id' => $farm->id, 'subscription_plan' => 'starter']);
+    }
+
+    public function test_unverified_success_callback_does_not_mark_payment_as_paid(): void
+    {
+        Http::fake([
+            'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'access-token']),
+            'sandbox.safaricom.co.ke/mpesa/stkpushquery/*' => Http::response([
+                'ResponseCode' => '0',
+                'CheckoutRequestID' => 'checkout-forged',
+                'ResultCode' => '1032',
+            ]),
+        ]);
+        config(['services.mpesa' => [
+            'environment' => 'sandbox', 'consumer_key' => 'key', 'consumer_secret' => 'secret',
+            'shortcode' => '174379', 'passkey' => 'passkey',
+            'callback_secret' => 'test-callback-secret-12345678901234567890',
+        ]]);
+        $user = User::factory()->create(['role' => 'farmOwner']);
+        $farm = Farm::create(['name' => 'Unverified Farm']);
+        $payment = Payment::create([
+            'farm_id' => $farm->id, 'user_id' => $user->id, 'plan_code' => 'starter',
+            'mother_pig_count' => 10, 'amount' => 100, 'currency' => 'KES',
+            'phone' => '254712345678', 'status' => 'pending',
+            'checkout_request_id' => 'checkout-forged',
+        ]);
+
+        $callbackUrl = '/api/v1/payments/mpesa/callback?callback_token=test-callback-secret-12345678901234567890';
+        $this->postJson($callbackUrl, ['Body' => ['stkCallback' => [
+            'CheckoutRequestID' => 'checkout-forged',
+            'ResultCode' => 0,
+            'CallbackMetadata' => ['Item' => [
+                ['Name' => 'Amount', 'Value' => 100],
+                ['Name' => 'MpesaReceiptNumber', 'Value' => 'FAKE123'],
+            ]],
+        ]]])->assertUnprocessable();
+
+        $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'pending']);
+        $this->assertDatabaseHas('farms', ['id' => $farm->id, 'subscription_plan' => null]);
+    }
+
+    public function test_callback_amount_must_match_the_paid_payment(): void
+    {
+        Http::fake([
+            'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'access-token']),
+            'sandbox.safaricom.co.ke/mpesa/stkpushquery/*' => Http::response([
+                'ResponseCode' => '0',
+                'CheckoutRequestID' => 'checkout-mismatch',
+                'ResultCode' => '0',
+            ]),
+        ]);
+        config(['services.mpesa' => [
+            'environment' => 'sandbox', 'consumer_key' => 'key', 'consumer_secret' => 'secret',
+            'shortcode' => '174379', 'passkey' => 'passkey',
+            'callback_secret' => 'test-callback-secret-12345678901234567890',
+        ]]);
+        $user = User::factory()->create(['role' => 'farmOwner']);
+        $farm = Farm::create(['name' => 'Mismatched Amount Farm']);
+        $payment = Payment::create([
+            'farm_id' => $farm->id, 'user_id' => $user->id, 'plan_code' => 'starter',
+            'mother_pig_count' => 10, 'amount' => 100, 'currency' => 'KES',
+            'phone' => '254712345678', 'status' => 'pending',
+            'checkout_request_id' => 'checkout-mismatch',
+        ]);
+
+        $callbackUrl = '/api/v1/payments/mpesa/callback?callback_token=test-callback-secret-12345678901234567890';
+        $this->postJson($callbackUrl, ['Body' => ['stkCallback' => [
+            'CheckoutRequestID' => 'checkout-mismatch',
+            'ResultCode' => 0,
+            'CallbackMetadata' => ['Item' => [
+                ['Name' => 'Amount', 'Value' => 1],
+                ['Name' => 'MpesaReceiptNumber', 'Value' => 'ABC123'],
+            ]],
+        ]]])->assertUnprocessable();
+
+        $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'pending']);
+        $this->assertDatabaseHas('farms', ['id' => $farm->id, 'subscription_plan' => null]);
     }
 }

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\VeterinarianProfile;
-use App\Models\VeterinaryPayment;
 use App\Models\VeterinarySubscriptionPlan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -89,6 +88,11 @@ class VeterinarianApiTest extends TestCase
     {
         Http::fake([
             'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'access-token']),
+            'sandbox.safaricom.co.ke/mpesa/stkpushquery/*' => Http::response([
+                'ResponseCode' => '0',
+                'CheckoutRequestID' => 'vet-checkout-1',
+                'ResultCode' => '0',
+            ]),
             'sandbox.safaricom.co.ke/mpesa/*' => Http::response([
                 'ResponseCode' => '0',
                 'MerchantRequestID' => 'vet-merchant-1',
@@ -153,6 +157,7 @@ class VeterinarianApiTest extends TestCase
                     'ResultDesc' => 'The service request is processed successfully.',
                     'CallbackMetadata' => [
                         'Item' => [
+                            ['Name' => 'Amount', 'Value' => 750],
                             ['Name' => 'MpesaReceiptNumber', 'Value' => 'QWE1234567'],
                         ],
                     ],

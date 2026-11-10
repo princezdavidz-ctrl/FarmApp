@@ -92,8 +92,8 @@ class AnimalSupplierApiTest extends TestCase
             ->assertJsonPath('data.stock_quantity', 18)
             ->assertJsonPath('data.active', false);
         $this->getJson('/api/v1/animal-products')
-        ->assertOk()
-        ->assertJsonCount(0, 'data');
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
 
         $otherSupplier = User::factory()->create(['role' => 'animalSupplier']);
         SupplierProfile::create([
@@ -115,6 +115,11 @@ class AnimalSupplierApiTest extends TestCase
     {
         Http::fake([
             'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'access-token']),
+            'sandbox.safaricom.co.ke/mpesa/stkpushquery/*' => Http::response([
+                'ResponseCode' => '0',
+                'CheckoutRequestID' => 'supplier-checkout-1',
+                'ResultCode' => '0',
+            ]),
             'sandbox.safaricom.co.ke/mpesa/*' => Http::response([
                 'ResponseCode' => '0',
                 'MerchantRequestID' => 'supplier-merchant-1',
@@ -175,6 +180,7 @@ class AnimalSupplierApiTest extends TestCase
             'ResultCode' => 0,
             'ResultDesc' => 'Payment received.',
             'CallbackMetadata' => ['Item' => [
+                ['Name' => 'Amount', 'Value' => 600],
                 ['Name' => 'MpesaReceiptNumber', 'Value' => 'SUP123456'],
             ]],
         ]]];
