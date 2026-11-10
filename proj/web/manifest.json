@@ -1,11 +1,11 @@
 {
-    "name": "Farm App",
-    "short_name": "Farm App",
+    "name": "FarmApp",
+    "short_name": "FarmApp",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#0b6b3a",
-    "description": "Farm App farm management.",
+    "description": "FarmApp farm management.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
