@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - mkdir -p /home/your-account/public_html
+    - cp -R dist/. /home/your-account/public_html/

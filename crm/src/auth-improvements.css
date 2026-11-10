@@ -1,0 +1,5 @@
+.remember-me-option{display:flex!important;grid-template-columns:none!important;align-items:center;gap:9px;color:#5d6d64;font-size:12px}.remember-me-option input{width:16px;height:16px;margin:0;accent-color:#286846}.login-card .ghost-button{justify-content:center;margin-top:-5px}.login-card input[autocomplete="one-time-code"]{letter-spacing:.28em;text-align:center;font-size:20px}.forgot-password-link{align-self:flex-end;padding:0;border:0;color:#286846;background:transparent;font-size:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px}.forgot-password-link:focus-visible,.login-card .ghost-button:focus-visible{outline:3px solid #8dbd55;outline-offset:3px}
+.login-card .remember-me-option input{width:16px;flex:0 0 16px}
+.login-screen{animation:crmLoginEnter .38s ease-out both}
+@keyframes crmLoginEnter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.login-screen{animation:none}}

@@ -1,0 +1,17 @@
+RewriteEngine On
+
+<IfModule mod_headers.c>
+	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	<Files "index.html">
+		Header set Cache-Control "no-cache, no-store, must-revalidate"
+	</Files>
+</IfModule>
+
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+RewriteRule ^(?:src|dist)(?:/|$) - [F,L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]

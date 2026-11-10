@@ -1,0 +1,4 @@
+---
+deployment:
+  tasks:
+    - BACKEND_DIR=/home/your-account/apps/farm-app/backend/app API_DOMAIN=api.example.invalid CRM_DOMAIN=crm.example.invalid /bin/bash /home/your-account/apps/farm-app/backend/deploy-backend.sh

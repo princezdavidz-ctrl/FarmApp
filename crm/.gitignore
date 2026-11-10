@@ -1,0 +1,8 @@
+node_modules/
+dist/
+assets/
+.env
+.env.*
+!.env.example
+crm-upload.zip
+dist.zip

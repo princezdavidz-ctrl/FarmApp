@@ -1,0 +1,107 @@
+.splash-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at top, #ebf6df 0%, #f5f7f2 38%, #edf2eb 100%);
+}
+
+.splash-screen .splash-card {
+  display: flex;
+  width: min(100%, 420px);
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 32px 28px;
+  border: 1px solid rgba(40, 104, 70, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 24px 60px rgba(20, 48, 33, 0.12);
+  animation: crmSplashFadeIn 650ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.splash-screen .splash-mark {
+  display: grid;
+  width: min(72vw, 180px);
+  height: min(72vw, 180px);
+  place-items: center;
+  border-radius: 22px;
+  background: #286846;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 18px 28px rgba(40, 104, 70, 0.2);
+  animation: crmSplashMarkPulse 1.8s ease-in-out infinite alternate;
+}
+
+.crm-mark {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #286846;
+  font-weight: 800;
+}
+
+.splash-screen .splash-copy {
+  text-align: center;
+}
+
+.splash-screen .splash-copy .eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #286846;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.splash-screen .splash-copy h1 {
+  margin: 0;
+  color: #203b2f;
+  font-size: clamp(22px, 6vw, 30px);
+  letter-spacing: -0.05em;
+}
+
+.splash-progress {
+  display: block;
+  width: 108px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #dce9d7;
+}
+
+.splash-progress::after {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: #286846;
+  content: "";
+  animation: splashProgress 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes splashProgress {
+  from { transform: translateX(-8%); }
+  to { transform: translateX(150%); }
+}
+
+@keyframes crmSplashMarkPulse {
+  from { transform: scale(0.99); }
+  to { transform: scale(1); }
+}
+
+@keyframes crmSplashFadeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen .splash-card,
+  .splash-screen .splash-mark,
+  .splash-progress::after {
+    animation: none;
+  }
+}

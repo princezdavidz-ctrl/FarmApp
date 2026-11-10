@@ -1,0 +1,173 @@
+.conversation-select {
+  width: 100%;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+}
+
+.conversation-select:hover,
+.conversation-select.active {
+  background: #f2f7ed;
+}
+
+.communication-workspace-panel > .panel-heading,
+.conversation-detail > .panel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.communication-workspace-panel h3 {
+  margin: 4px 0;
+}
+
+.communication-online-roster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.communication-online-roster strong {
+  color: var(--green);
+}
+
+.support-presence-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.communication-workspace-panel select,
+.communication-workspace-panel input,
+.communication-workspace-panel textarea {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.communication-composer label,
+.conversation-controls label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.communication-composer .template-active-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-active-toggle input {
+  width: 16px;
+  min-width: 16px;
+  margin: 0;
+}
+
+.conversation-detail {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.conversation-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+}
+
+.conversation-controls select {
+  min-width: 180px;
+}
+
+.conversation-transcript {
+  display: grid;
+  gap: 12px;
+  max-height: min(54vh, 560px);
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8faf6;
+}
+
+.conversation-message {
+  width: min(88%, 720px);
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+
+.conversation-message.outgoing {
+  justify-self: end;
+  border-color: #cfe4b7;
+  background: #edf6e7;
+}
+
+.conversation-message > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  color: var(--green);
+  font-size: 12px;
+}
+
+.conversation-message time {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.conversation-message p {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.conversation-message-read-state {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: right;
+}
+
+.communication-message-row > span {
+  color: var(--green);
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .conversation-message {
+    width: 100%;
+  }
+
+  .conversation-controls {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .conversation-controls label,
+  .conversation-controls select {
+    flex: 1;
+  }
+}

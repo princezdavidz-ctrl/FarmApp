@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('pig_inquiries', function (Blueprint $table) {
+            $table->foreignId('buyer_user_id')
+                ->nullable()
+                ->after('pig_listing_id')
+                ->constrained('users')
+                ->nullOnDelete();
+            $table->index(['buyer_user_id', 'created_at']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('pig_inquiries', function (Blueprint $table) {
+            $table->dropIndex(['buyer_user_id', 'created_at']);
+            $table->dropConstrainedForeignId('buyer_user_id');
+        });
+    }
+};
