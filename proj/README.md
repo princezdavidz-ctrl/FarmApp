@@ -1,4 +1,17 @@
-# FarmApp — Primary Flutter Application\n\nThis directory (`proj/`) is the canonical Flutter application for FarmApp. New farm-management features, fixes, and shared design changes should be made here first. The separate `ios-app/` directory is a historical parallel copy; it must not be treated as a second source of truth. Review and selectively port any platform-specific or newer changes from `ios-app/` before changing or retiring it.\n\nBuild the app with the backend URL supplied at build time:\n\n```sh\nflutter pub get\nflutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1\n```\n\nFor a deployed build, replace that local emulator URL with the real HTTPS API origin, ending in `/api/v1`. Configure Firebase app registrations and platform configuration separately; do not copy credentials into source control.\n\n# Farm App
+# FarmApp — Primary Flutter Application
+
+This directory (`proj/`) is the canonical Flutter application for FarmApp. New farm-management features, fixes, and shared design changes should be made here first. The separate `ios-app/` directory is a historical parallel copy; it must not be treated as a second source of truth. Review and selectively port any platform-specific or newer changes from `ios-app/` before changing or retiring it.
+
+Build the app with the backend URL supplied at build time:
+
+```sh
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
+```
+
+For a deployed build, replace that local emulator URL with the real HTTPS API origin, ending in `/api/v1`. Configure Firebase app registrations and platform configuration separately; do not copy credentials into source control.
+
+# Farm App
 
 ## Phase 2 Foundation
 
