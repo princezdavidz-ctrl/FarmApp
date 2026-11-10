@@ -1,21 +1,4 @@
-# proj
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# Farm App
+# FarmApp — Primary Flutter Application\n\nThis directory (`proj/`) is the canonical Flutter application for FarmApp. New farm-management features, fixes, and shared design changes should be made here first. The separate `ios-app/` directory is a historical parallel copy; it must not be treated as a second source of truth. Review and selectively port any platform-specific or newer changes from `ios-app/` before changing or retiring it.\n\nBuild the app with the backend URL supplied at build time:\n\n```sh\nflutter pub get\nflutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1\n```\n\nFor a deployed build, replace that local emulator URL with the real HTTPS API origin, ending in `/api/v1`. Configure Firebase app registrations and platform configuration separately; do not copy credentials into source control.\n\n# Farm App
 
 ## Phase 2 Foundation
 
