@@ -119,11 +119,11 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     Icons.agriculture,
                     size: 144,
                     color: Theme.of(context).colorScheme.primary,
-                    semanticLabel: 'Farm App',
+                    semanticLabel: 'FarmApp',
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Farm App',
+                    'FarmApp',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w800,
