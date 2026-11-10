@@ -98,7 +98,8 @@ void main() {
         child: const MaterialApp(home: FarmManagementPage()),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     final memberName = find.text('Test Worker');
     await tester.scrollUntilVisible(
