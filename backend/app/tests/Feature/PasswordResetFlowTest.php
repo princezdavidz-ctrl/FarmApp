@@ -16,6 +16,7 @@ class PasswordResetFlowTest extends TestCase
 
     public function test_user_can_request_email_and_complete_password_reset(): void
     {
+        config()->set('services.password_reset.frontend_url', 'https://password.example.invalid/');
         Notification::fake();
         $user = User::factory()->create(['password' => Hash::make('old-password')]);
         $accessToken = $user->createToken('mobile')->accessToken;
