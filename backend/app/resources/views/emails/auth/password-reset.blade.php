@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>Reset your Farm App password</title>
+    <title>Reset your FarmApp password</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f7f3;font-family:Arial,Helvetica,sans-serif;color:#183426">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f7f3;padding:28px 12px">
@@ -13,9 +13,9 @@
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dce7dc;border-radius:18px;overflow:hidden">
                     <tr>
                         <td style="padding:30px 28px 12px">
-                            <p style="margin:0;color:#176b4d;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase">Farm App</p>
+                            <p style="margin:0;color:#176b4d;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase">FarmApp</p>
                             <h1 style="margin:14px 0 10px;font-size:25px;line-height:1.25;color:#183426">Reset your password</h1>
-                            <p style="margin:0;color:#65766a;font-size:15px;line-height:1.65">Hello {{ $name }}, we received a request to set a new password for your Farm App account.</p>
+                            <p style="margin:0;color:#65766a;font-size:15px;line-height:1.65">Hello {{ $name }}, we received a request to set a new password for your FarmApp account.</p>
                         </td>
                     </tr>
                     <tr>
@@ -33,7 +33,7 @@
                         </td>
                     </tr>
                 </table>
-                <p style="margin:16px 0 0;color:#8a968d;font-size:11px">© {{ date('Y') }} Farm App</p>
+                <p style="margin:16px 0 0;color:#8a968d;font-size:11px">© {{ date('Y') }} FarmApp</p>
             </td>
         </tr>
     </table>
