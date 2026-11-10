@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:proj/features/subscription/presentation/pages/payment_status_page.dart';
 
 void main() {
   testWidgets('shows M-Pesa waiting and confirmation guidance', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: PaymentStatusPage(
+      const ProviderScope(
+        child: MaterialApp(
+          home: PaymentStatusPage(
           amount: 500,
           currency: 'KES',
           merchantRequestId: 'merchant-1',
           checkoutRequestId: 'checkout-1',
+          ),
         ),
       ),
     );
