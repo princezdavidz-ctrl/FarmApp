@@ -292,7 +292,7 @@ class SalesPage extends ConsumerWidget {
     final priceController = TextEditingController();
     final notesController = TextEditingController();
     final referenceController = TextEditingController(
-      text: 'PW-${DateTime.now().millisecondsSinceEpoch}',
+      text: 'FA-${DateTime.now().millisecondsSinceEpoch}',
     );
     String buyerId = buyerRows.first.id;
     String currency = 'KES';
