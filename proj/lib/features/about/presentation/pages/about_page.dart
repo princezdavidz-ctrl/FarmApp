@@ -21,7 +21,7 @@ class _AboutPageState extends State<AboutPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('About Farm App'), elevation: 0),
+      appBar: AppBar(title: const Text('About FarmApp'), elevation: 0),
       body: ListView(
         padding: const EdgeInsets.all(AppDimensions.pagePadding),
         children: [
@@ -36,7 +36,7 @@ class _AboutPageState extends State<AboutPage> {
             isExpanded: _expandedMission,
             onTap: () => setState(() => _expandedMission = !_expandedMission),
             child: Text(
-              'Farm App helps farmers manage their farms, improve productivity, and make confident decisions with practical digital tools.',
+              'FarmApp helps farmers manage their farms, improve productivity, and make confident decisions with practical digital tools.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
@@ -177,7 +177,7 @@ class _AboutPageState extends State<AboutPage> {
   String _getLegalContent(String title) {
     switch (title) {
       case 'Privacy Policy':
-        return 'Farm App Privacy Policy\n\n'
+        return 'FarmApp Privacy Policy\n\n'
             'Last Updated: 2026\n\n'
             'Your privacy is important to us. We are committed to being transparent about the data we collect and how we use it.\n\n'
             'Data Collection: We collect information about your farm operations to provide better service.\n\n'
@@ -185,16 +185,16 @@ class _AboutPageState extends State<AboutPage> {
             'Security: We implement industry-standard security measures to protect your data.\n\n'
             'For more information, visit https://example.invalid/privacy';
       case 'Terms & Conditions':
-        return 'Farm App User Agreement\n\n'
+        return 'FarmApp User Agreement\n\n'
             'Last Updated: 2026\n\n'
-            'By using PigWorld, you agree to these terms and conditions.\n\n'
-            'License: We grant you a limited license to use PigWorld for personal use.\n\n'
+            'By using FarmApp, you agree to these terms and conditions.\n\n'
+            'License: We grant you a limited license to use FarmApp for your farm management activities.\n\n'
             'Restrictions: You may not modify, copy, or distribute the app.\n\n'
             'Liability: We are not liable for any indirect damages.\n\n'
             'For more information, visit https://example.invalid/terms';
       case 'Open Source Licenses':
-        return 'Farm App Open Source Licenses\n\n'
-            'PigWorld uses the following open source packages:\n\n'
+        return 'FarmApp Open Source Licenses\n\n'
+            'FarmApp uses the following open source packages:\n\n'
             '• Riverpod 2.6.1 - Apache License 2.0\n'
             '• Dio 5.7.0 - MIT License\n'
             '• Flutter - BSD License\n'
@@ -241,12 +241,12 @@ class _HeaderSection extends StatelessWidget {
               Icons.agriculture,
               size: 96,
               color: Colors.white,
-              semanticLabel: 'Farm App',
+              semanticLabel: 'FarmApp',
             ),
           ),
           const SizedBox(height: AppDimensions.spacingMedium),
           Text(
-            'Farm App',
+            'FarmApp',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: AppColors.inverseText,
               fontWeight: FontWeight.bold,
@@ -254,7 +254,7 @@ class _HeaderSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Smart Pig Farm Management',
+            'Farm Management Platform',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColors.inverseMutedText),
@@ -383,7 +383,7 @@ class _AppInfoSection extends StatelessWidget {
   void _checkForUpdates(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('You are using the latest version of PigWorld'),
+        content: Text('You are using the latest version of FarmApp'),
         duration: Duration(seconds: 2),
       ),
     );

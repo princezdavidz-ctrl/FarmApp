@@ -63,7 +63,7 @@ class PigListing {
 
   String get shareText {
     final details = <String>[
-      'Farm App marketplace',
+      'FarmApp marketplace',
       title,
       'Breed: $breed',
       'Available: $quantity',

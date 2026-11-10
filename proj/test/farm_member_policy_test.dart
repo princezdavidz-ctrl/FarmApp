@@ -7,6 +7,7 @@ import 'package:proj/features/auth/domain/entities/farm.dart';
 import 'package:proj/features/auth/domain/entities/session.dart';
 import 'package:proj/features/auth/domain/entities/user.dart';
 import 'package:proj/features/auth/presentation/providers/auth_provider.dart';
+import 'package:proj/features/auth/presentation/providers/auth_providers.dart';
 import 'package:proj/features/settings/domain/entities/farm_member.dart';
 import 'package:proj/features/settings/presentation/pages/farm_management_page.dart';
 import 'package:proj/features/settings/presentation/pages/sections/user_management_section.dart';
@@ -92,13 +93,15 @@ void main() {
       ProviderScope(
         overrides: [
           authProvider.overrideWith(() => _TestAuthNotifier(_ownerSession())),
+          dioProvider.overrideWithValue(_offlineDio()),
           farmAccessProvider.overrideWith(_TestFarmAccessNotifier.new),
           farmTeamProvider.overrideWith(_TestFarmTeamNotifier.new),
         ],
         child: const MaterialApp(home: FarmManagementPage()),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     final memberName = find.text('Test Worker');
     await tester.scrollUntilVisible(
@@ -216,4 +219,20 @@ class _TestFarmAccessNotifier extends FarmAccessNotifier {
 class _TestFarmTeamNotifier extends FarmTeamNotifier {
   @override
   Future<FarmTeamState> build() async => const FarmTeamState();
+}
+
+Dio _offlineDio() {
+  final dio = Dio(BaseOptions(baseUrl: 'https://farmapp.test/api/v1'));
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onRequest: (options, handler) => handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: {'data': <dynamic>[]},
+        ),
+      ),
+    ),
+  );
+  return dio;
 }

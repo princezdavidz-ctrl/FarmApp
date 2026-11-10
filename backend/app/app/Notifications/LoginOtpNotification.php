@@ -23,7 +23,7 @@ class LoginOtpNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Farm App sign-in code')
+            ->subject('Your FarmApp sign-in code')
             ->greeting('Sign-in verification')
             ->line('Use this one-time code to finish signing in:')
             ->line($this->code)

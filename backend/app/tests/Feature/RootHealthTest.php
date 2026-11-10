@@ -12,7 +12,7 @@ class RootHealthTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'status' => 'ok',
-                'service' => 'Farm App',
+                'service' => 'FarmApp',
             ]);
     }
 }

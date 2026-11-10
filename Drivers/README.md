@@ -23,11 +23,10 @@ equipment, or both herds and supplies.
 
 ```sh
 flutter pub get
-flutter run --dart-define=API_BASE_URL=https://api.example.invalid/api/v1
+flutter run
 ```
 
-`api.example.invalid` is a non-routable placeholder. Set `API_BASE_URL` to
-your own API endpoint for deployments.
+Debug builds use the local backend automatically (`localhost` for desktop/iOS and `10.0.2.2` for Android emulators). Release builds require a real API URL supplied with `--dart-define=API_BASE_URL=https://<your-api-host>/api/v1`.
 
 For an Android emulator using a local backend:
 

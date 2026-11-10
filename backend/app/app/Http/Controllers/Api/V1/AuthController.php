@@ -113,7 +113,7 @@ class AuthController extends Controller
                     'farm_id' => $farm->id,
                     'recipient_id' => $user->id,
                     'type' => 'welcome',
-                    'title' => 'Welcome '.$user->name.' to Farm App',
+                    'title' => 'Welcome '.$user->name.' to FarmApp',
                     'body' => 'We will be with you all the way.',
                     'severity' => 'success',
                     'related_type' => 'user',
@@ -281,7 +281,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $email)->first();
         if ($user === null || $user->crm_closed_at !== null) {
-            throw ValidationException::withMessages(['email' => ['No active Farm App account is associated with this Google email.']]);
+            throw ValidationException::withMessages(['email' => ['No active FarmApp account is associated with this Google email.']]);
         }
 
         return $this->authResponse($user);
@@ -414,7 +414,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Your password has been updated. You can now sign in to Farm App.',
+            'message' => 'Your password has been updated. You can now sign in to FarmApp.',
         ]);
     }
 

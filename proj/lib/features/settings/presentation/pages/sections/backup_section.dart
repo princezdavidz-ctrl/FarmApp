@@ -29,7 +29,8 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     final local = ref.read(settingsLocalDataSourceProvider);
     final farm = ref.read(authProvider).valueOrNull?.selectedFarm;
     return {
-      'format': 'pigworld-settings-backup',
+      // Accept the legacy marker when restoring backups created by the previous app name.
+      'format': 'farmapp-settings-backup',
       'version': 1,
       'created_at': DateTime.now().toIso8601String(),
       'farm': farm == null ? null : {'id': farm.id, 'name': farm.name},
@@ -52,14 +53,14 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     try {
       final snapshot = await _settingsSnapshot();
       final filePath = await ReportExportService().exportReport(
-        reportName: 'pigworld_settings_backup',
+        reportName: 'farmapp_settings_backup',
         format: 'json',
         data: snapshot,
       );
       await ref
           .read(backupSettingsProvider.notifier)
           .recordBackup(DateTime.now());
-      await _shareFile(filePath, 'Farm App settings backup');
+      await _shareFile(filePath, 'FarmApp settings backup');
       if (mounted) {
         _message(
           'Settings backup created at $filePath. Server farm records are not included.',
@@ -127,7 +128,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     try {
       final decoded = jsonDecode(json);
       if (decoded is! Map<String, dynamic> ||
-          decoded['format'] != 'pigworld-settings-backup' ||
+          !['farmapp-settings-backup', 'pigworld-settings-backup'].contains(decoded['format']) ||
           decoded['version'] != 1 ||
           decoded['settings'] is! Map) {
         throw const FormatException('This is not a supported settings backup.');

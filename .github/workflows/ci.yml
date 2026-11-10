@@ -1,0 +1,77 @@
+name: FarmApp CI
+
+on:
+  push:
+    branches: [main, "chore/**", "fix/**", "feature/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: farmapp-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    name: Flutter checks (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [proj, buyer, Drivers, Suppliers, Vetinaries]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        working-directory: ${{ matrix.project }}
+        run: flutter pub get
+      - name: Analyze
+        working-directory: ${{ matrix.project }}
+        run: flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings
+      - name: Test
+        working-directory: ${{ matrix.project }}
+        run: flutter test --no-pub
+
+  backend:
+    name: Laravel backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, pdo_sqlite, sqlite3, xml, curl, fileinfo
+          coverage: none
+      - name: Install Composer dependencies
+        working-directory: backend/app
+        run: composer install --no-interaction --prefer-dist
+      - name: Configure test environment
+        working-directory: backend/app
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Run feature and unit tests
+        working-directory: backend/app
+        run: php artisan test
+
+  crm:
+    name: CRM production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: crm/package-lock.json
+      - name: Install dependencies
+        working-directory: crm
+        run: npm ci
+      - name: Build CRM
+        working-directory: crm
+        run: npm run build

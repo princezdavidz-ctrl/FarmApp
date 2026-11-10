@@ -29,6 +29,8 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(const SalesPage()));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('My sales'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Farm sales'), findsWidgets);
     expect(find.text('SALE-1001'), findsOneWidget);
@@ -94,6 +96,7 @@ Widget _testApp(Widget child) {
       farmSalesProvider.overrideWith(_TestFarmSalesNotifier.new),
       farmAccessProvider.overrideWith(_TestFarmAccessNotifier.new),
       reportsApiProvider.overrideWithValue(_FakeReportsApi(_metrics)),
+      pigMarketplaceProvider.overrideWith(_TestPigMarketplaceNotifier.new),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,

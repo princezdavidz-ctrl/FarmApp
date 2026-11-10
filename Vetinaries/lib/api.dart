@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 class VetApi {
   VetApi()
@@ -11,10 +12,19 @@ class VetApi {
         ),
       );
 
-  static const _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'https://api.example.invalid/api/v1',
-  );
+  static String get _baseUrl {
+    const configured = String.fromEnvironment('API_BASE_URL');
+    if (configured.isNotEmpty) return configured;
+    if (kReleaseMode) {
+      throw StateError(
+        'API_BASE_URL is required for release builds. Pass '
+        '--dart-define=API_BASE_URL=https://<your-api-host>/api/v1.',
+      );
+    }
+    return defaultTargetPlatform == TargetPlatform.android
+        ? 'http://10.0.2.2:8000/api/v1'
+        : 'http://localhost:8000/api/v1';
+  }
 
   final Dio _dio;
   void setAccessToken(String? token) {

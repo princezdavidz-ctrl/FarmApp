@@ -30,8 +30,8 @@ class FarmNotification {
         id: '${json['id']}',
         type: '${json['type'] ?? 'general'}',
         title: '${json['title'] ?? ''}'.replaceAll(
-          'Farm App CRM',
-          'Farm App Support',
+          'FarmApp CRM',
+          'FarmApp Support',
         ),
         body: '${json['body'] ?? ''}',
         severity: '${json['severity'] ?? 'info'}',

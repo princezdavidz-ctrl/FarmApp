@@ -51,7 +51,7 @@ class PasswordResetController
         return view('auth.reset-password', [
             'token' => '',
             'email' => $data['email'],
-            'status' => 'Your password has been updated. You can now sign in to Farm App.',
+            'status' => 'Your password has been updated. You can now sign in to FarmApp.',
             'success' => true,
         ]);
     }

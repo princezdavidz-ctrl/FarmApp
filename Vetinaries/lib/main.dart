@@ -6,7 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api.dart';
 
 void main() {
-  runApp(const PigWorldVetinariesApp());
+  runApp(const FarmAppVeterinarianApp());
 }
 
 enum AppPage {
@@ -380,14 +380,14 @@ class AppController extends ChangeNotifier {
   }
 }
 
-class PigWorldVetinariesApp extends StatefulWidget {
-  const PigWorldVetinariesApp({super.key});
+class FarmAppVeterinarianApp extends StatefulWidget {
+  const FarmAppVeterinarianApp({super.key});
 
   @override
-  State<PigWorldVetinariesApp> createState() => _PigWorldVetinariesAppState();
+  State<FarmAppVeterinarianApp> createState() => _FarmAppVeterinarianAppState();
 }
 
-class _PigWorldVetinariesAppState extends State<PigWorldVetinariesApp> {
+class _FarmAppVeterinarianAppState extends State<FarmAppVeterinarianApp> {
   late final AppController _controller;
 
   @override

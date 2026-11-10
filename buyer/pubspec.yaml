@@ -1,5 +1,5 @@
-name: pigworld_buyer
-description: Buyer buyer app for finding pigs from farms.
+name: farmapp_buyer
+description: FarmApp buyer app for finding pigs from farms.
 publish_to: none
 version: 1.0.0+1
 

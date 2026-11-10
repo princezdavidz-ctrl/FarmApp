@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#176b4d">
     <meta name="api-base-url" content="http://localhost:8000/api/v1">
-    <title>Reset password · Farm App</title>
+    <title>Reset password · FarmApp</title>
     <style>
       :root {
         color-scheme: light;
@@ -64,7 +64,7 @@
     <main class="card">
       <header class="brand">
         <div>
-          <div class="brand-name">Farm App</div>
+          <div class="brand-name">FarmApp</div>
           <div class="brand-caption">Farm management, made simpler</div>
         </div>
       </header>
@@ -96,7 +96,7 @@
         </div>
         <button class="submit" id="submit" type="submit">Save new password</button>
       </form>
-      <p class="footer"><a href="/">Back to Farm App</a></p>
+      <p class="footer"><a href="/">Back to FarmApp</a></p>
       <p class="help">If you did not request this change, you can safely ignore this page.</p>
     </main>
 
@@ -161,7 +161,7 @@
           message.classList.remove('visible');
         } catch (error) {
           message.textContent = error instanceof TypeError
-            ? 'Could not connect to Farm App. Check your connection and try again.'
+            ? 'Could not connect to FarmApp. Check your connection and try again.'
             : error.message;
           message.classList.add('visible');
         } finally {
