@@ -42,7 +42,7 @@ class SupportSection extends StatelessWidget {
                 _SupportTile(
                   icon: Icons.feedback_outlined,
                   title: 'Send Feedback',
-                  subtitle: 'Help us improve PigWorld',
+                  subtitle: 'Help us improve FarmApp',
                   onTap: () => context.go(AppRoutes.support),
                 ),
               ],
@@ -87,7 +87,7 @@ class SupportSection extends StatelessWidget {
                   subtitle: 'Open source licenses',
                   onTap: () => showLicensePage(
                     context: context,
-                    applicationName: 'PigWorld Smart',
+                    applicationName: 'FarmApp',
                   ),
                 ),
               ],
@@ -103,7 +103,7 @@ class SupportSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'About PigWorld',
+                  'About FarmApp',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppDimensions.spacingMedium),
@@ -121,7 +121,7 @@ class SupportSection extends StatelessWidget {
                           _openLink(
                             context,
                             Uri.parse('https://example.invalid'),
-                            'PigWorld Smart website',
+                            'FarmApp website',
                           );
                         },
                         icon: const Icon(Icons.update),
@@ -143,12 +143,12 @@ class SupportSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'PigWorld Smart',
+                  'FarmApp',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Comprehensive pig farm management system for African farmers. '
+                  'A comprehensive farm management platform for farmers. '
                   'Manage herd health, insemination, feed, growth tracking, sales, and more.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
