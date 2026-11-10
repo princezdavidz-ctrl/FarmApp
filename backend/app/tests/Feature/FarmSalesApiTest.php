@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Farm;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class FarmSalesApiTest extends TestCase
@@ -13,7 +14,7 @@ class FarmSalesApiTest extends TestCase
 
     public function test_farm_manager_can_create_a_buyer_sale_and_update_sale_status(): void
     {
-        $this->travelTo(\\Illuminate\\Support\\Carbon::parse('2026-10-06 12:00:00'));
+        $this->travelTo(Carbon::parse('2026-10-06 12:00:00'));
         [$manager, $farm] = $this->farmWithManager();
 
         $buyerId = $this->actingAs($manager, 'sanctum')
