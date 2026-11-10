@@ -60,7 +60,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
       await ref
           .read(backupSettingsProvider.notifier)
           .recordBackup(DateTime.now());
-      await _shareFile(filePath, 'Farm App settings backup');
+      await _shareFile(filePath, 'FarmApp settings backup');
       if (mounted) {
         _message(
           'Settings backup created at $filePath. Server farm records are not included.',
