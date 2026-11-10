@@ -128,7 +128,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     try {
       final decoded = jsonDecode(json);
       if (decoded is! Map<String, dynamic> ||
-          decoded['format'] != 'pigworld-settings-backup' ||
+          !['farmapp-settings-backup', 'pigworld-settings-backup'].contains(decoded['format']) ||
           decoded['version'] != 1 ||
           decoded['settings'] is! Map) {
         throw const FormatException('This is not a supported settings backup.');
