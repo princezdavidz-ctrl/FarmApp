@@ -141,6 +141,8 @@ class _PaymentMethodPageState extends ConsumerState<PaymentMethodPage> {
         extra: {
           'amount': amount,
           'currency': currency,
+          'farm_id': selectedFarm.id,
+          'payment_id': payment['id']?.toString() ?? '',
           'payment_method': _selectedMethod,
           'merchant_request_id': payment['merchant_request_id'] ?? '',
           'checkout_request_id': payment['checkout_request_id'] ?? '',
