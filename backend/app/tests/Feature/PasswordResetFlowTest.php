@@ -124,7 +124,7 @@ class PasswordResetFlowTest extends TestCase
         ])->assertOk()
             ->assertJsonPath(
                 'message',
-                'Your password has been updated. You can now sign in to Farm App.',
+                'Your password has been updated. You can now sign in to FarmApp.',
             );
 
         $this->assertTrue(Hash::check('new-password-123', $user->fresh()->password));
