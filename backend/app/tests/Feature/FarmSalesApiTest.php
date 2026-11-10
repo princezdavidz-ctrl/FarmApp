@@ -13,6 +13,7 @@ class FarmSalesApiTest extends TestCase
 
     public function test_farm_manager_can_create_a_buyer_sale_and_update_sale_status(): void
     {
+        $this->travelTo(\\Illuminate\\Support\\Carbon::parse('2026-10-06 12:00:00'));
         [$manager, $farm] = $this->farmWithManager();
 
         $buyerId = $this->actingAs($manager, 'sanctum')
