@@ -74,10 +74,10 @@ class MpesaService
                     default => 'Farm-'.$payment->farm_id,
                 },
                 'TransactionDesc' => match (true) {
-                    $payment instanceof VeterinaryPayment => 'Farm App veterinary subscription',
-                    $payment instanceof DriverPayment => 'Farm App driver subscription',
-                    $payment instanceof SupplierPayment => 'Farm App animal supplier subscription',
-                    default => 'Farm App subscription',
+                    $payment instanceof VeterinaryPayment => 'FarmApp veterinary subscription',
+                    $payment instanceof DriverPayment => 'FarmApp driver subscription',
+                    $payment instanceof SupplierPayment => 'FarmApp animal supplier subscription',
+                    default => 'FarmApp subscription',
                 },
             ]);
 
