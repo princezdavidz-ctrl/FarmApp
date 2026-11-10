@@ -39,7 +39,7 @@ class AuthApiTest extends TestCase
             'farm_id' => $registration->json('farms.0.id'),
             'recipient_id' => $registration->json('user.id'),
             'type' => 'welcome',
-            'title' => 'Welcome Owner to Farm App',
+            'title' => 'Welcome Owner to FarmApp',
             'body' => 'We will be with you all the way.',
         ]);
 
@@ -119,7 +119,7 @@ class AuthApiTest extends TestCase
             'farm_id' => $farm->id,
             'recipient_id' => $response->json('user.id'),
             'type' => 'welcome',
-            'title' => 'Welcome New Manager to Farm App',
+            'title' => 'Welcome New Manager to FarmApp',
             'body' => 'We will be with you all the way.',
         ]);
     }
