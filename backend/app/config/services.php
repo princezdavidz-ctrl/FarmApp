@@ -10,7 +10,7 @@ return [
     'password_reset' => [
         'frontend_url' => env(
             'PASSWORD_RESET_FRONTEND_URL',
-            'https://password.example.invalid/',
+            env('APP_URL', 'http://localhost').'/reset-password',
         ),
     ],
 
