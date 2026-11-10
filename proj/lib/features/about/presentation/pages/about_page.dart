@@ -187,14 +187,14 @@ class _AboutPageState extends State<AboutPage> {
       case 'Terms & Conditions':
         return 'Farm App User Agreement\n\n'
             'Last Updated: 2026\n\n'
-            'By using PigWorld, you agree to these terms and conditions.\n\n'
-            'License: We grant you a limited license to use PigWorld for personal use.\n\n'
+            'By using FarmApp, you agree to these terms and conditions.\n\n'
+            'License: We grant you a limited license to use FarmApp for your farm management activities.\n\n'
             'Restrictions: You may not modify, copy, or distribute the app.\n\n'
             'Liability: We are not liable for any indirect damages.\n\n'
             'For more information, visit https://example.invalid/terms';
       case 'Open Source Licenses':
         return 'Farm App Open Source Licenses\n\n'
-            'PigWorld uses the following open source packages:\n\n'
+            'FarmApp uses the following open source packages:\n\n'
             '• Riverpod 2.6.1 - Apache License 2.0\n'
             '• Dio 5.7.0 - MIT License\n'
             '• Flutter - BSD License\n'
@@ -254,7 +254,7 @@ class _HeaderSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Smart Pig Farm Management',
+            'Farm Management Platform',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColors.inverseMutedText),
@@ -383,7 +383,7 @@ class _AppInfoSection extends StatelessWidget {
   void _checkForUpdates(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('You are using the latest version of PigWorld'),
+        content: Text('You are using the latest version of FarmApp'),
         duration: Duration(seconds: 2),
       ),
     );
