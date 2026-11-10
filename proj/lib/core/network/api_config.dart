@@ -1,6 +1,6 @@
 abstract final class ApiConfig {
   // Override per environment with --dart-define=API_BASE_URL=...
-  static const productionBaseUrl = 'https://api.example.invalid/api/v1';
+  static const productionBaseUrl = String.fromEnvironment(\n    'API_BASE_URL',\n    defaultValue: 'http://10.0.2.2:8000/api/v1',\n  );
 
   static String get baseUrl {
     const configured = String.fromEnvironment('API_BASE_URL');
