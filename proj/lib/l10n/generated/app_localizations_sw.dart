@@ -9,7 +9,7 @@ class AppLocalizationsSw extends AppLocalizations {
   AppLocalizationsSw([String locale = 'sw']) : super(locale);
 
   @override
-  String get appTitle => 'Programu ya Farm App';
+  String get appTitle => 'Programu ya FarmApp';
 
   @override
   String get home => 'Nyumbani';
