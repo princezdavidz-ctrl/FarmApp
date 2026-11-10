@@ -107,7 +107,10 @@ void main() {
     expect(find.text('Suggested tag: PIG-003'), findsOneWidget);
 
     final addPigletDetails = find.text('Add details').last;
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -220));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(addPigletDetails);
+    await tester.pumpAndSettle();
     await tester.tap(addPigletDetails);
     await tester.pumpAndSettle();
     expect(find.text('Add pig details'), findsOneWidget);
