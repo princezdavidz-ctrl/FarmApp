@@ -29,7 +29,8 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     final local = ref.read(settingsLocalDataSourceProvider);
     final farm = ref.read(authProvider).valueOrNull?.selectedFarm;
     return {
-      // Keep the v1 marker so existing FarmApp settings backups remain restorable.\n      'format': 'pigworld-settings-backup',
+      // Keep the v1 marker so existing FarmApp settings backups remain restorable.
+      'format': 'pigworld-settings-backup',
       'version': 1,
       'created_at': DateTime.now().toIso8601String(),
       'farm': farm == null ? null : {'id': farm.id, 'name': farm.name},
