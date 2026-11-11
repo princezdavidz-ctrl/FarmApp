@@ -387,6 +387,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   crossAxisSpacing: AppDimensions.spacingMedium,
                   childAspectRatio: 0.95,
                   children: [
+                    if (allows(AppPermission.manageCrops))
+                      _QuickAction(
+                        icon: Icons.agriculture_outlined,
+                        label: 'Crop farming',
+                        color: AppColors.leaf,
+                        onTap: () => context.go(AppRoutes.crops),
+                      ),
                     if (allows(AppPermission.manageHerd))
                       _QuickAction(
                         icon: Icons.pets_outlined,
