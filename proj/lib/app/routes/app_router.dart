@@ -168,7 +168,7 @@ abstract final class AppRouter {
           GoRoute(
             path: AppRoutes.cropActivities,
             builder: (context, state) => const PermissionRoute(
-              permission: AppPermission.viewCrops,
+              permission: AppPermission.manageCrops,
               child: CropActivitiesPage(),
             ),
           ),
@@ -474,7 +474,7 @@ class _AppDrawer extends ConsumerWidget {
                       title: 'Crop farming',
                       route: AppRoutes.crops,
                     ),
-                  if (allows(AppPermission.viewCrops))
+                  if (allows(AppPermission.manageCrops))
                     _ListTile(
                       icon: Icons.event_note_outlined,
                       title: 'Field activities',
