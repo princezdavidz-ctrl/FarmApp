@@ -31,12 +31,14 @@ class MeasurementHistorySection extends ConsumerWidget {
               );
             }
 
+            final sortedRecords = [...records]
+              ..sort((a, b) => b.measurementDate.compareTo(a.measurementDate));
             return ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: records.length,
+              itemCount: sortedRecords.length,
               itemBuilder: (context, index) {
-                final record = records[index];
+                final record = sortedRecords[index];
                 final isFirst = index == 0;
                 final isLast = index == records.length - 1;
 

@@ -32,8 +32,10 @@ class WeightRecordsSection extends ConsumerWidget {
               );
             }
 
-            // Show top 5 most recent records
-            final topRecords = records.take(5).toList();
+            // Sort explicitly because API response ordering is not guaranteed.
+            final sortedRecords = [...records]
+              ..sort((a, b) => b.measurementDate.compareTo(a.measurementDate));
+            final topRecords = sortedRecords.take(5).toList();
             return ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),

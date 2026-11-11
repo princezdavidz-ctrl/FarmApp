@@ -117,8 +117,7 @@ class _GrowthPageState extends ConsumerState<GrowthPage>
             children: [
               GrowthOverviewCard(
                 label: 'Average Weight',
-                value:
-                    '${(overview['average_weight'] ?? 0).toStringAsFixed(1)} kg',
+                value: '${_number(overview['average_weight'], 1)} kg',
                 icon: Icons.balance,
                 color: AppColors.info,
               ),
@@ -130,21 +129,26 @@ class _GrowthPageState extends ConsumerState<GrowthPage>
               ),
               GrowthOverviewCard(
                 label: 'Weight Gain (Week)',
-                value:
-                    '${(overview['weekly_gain'] ?? 0).toStringAsFixed(1)} kg',
+                value: '${_number(overview['weekly_gain'], 1)} kg',
                 icon: Icons.show_chart,
                 color: AppColors.warning,
               ),
               GrowthOverviewCard(
                 label: 'Growth Target',
-                value: '${overview['target_achievement'] ?? 0}%',
+                value: '${_number(overview['target_achievement'], 0)}%',
                 icon: Icons.flag,
                 color: AppColors.primaryGreen,
               ),
             ],
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, st) => Center(child: Text('Error: $e')),
+          error: (e, st) => Center(
+            child: TextButton.icon(
+              onPressed: () => ref.invalidate(growthOverviewProvider),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Could not load growth overview. Retry'),
+            ),
+          ),
         );
   }
 
@@ -175,7 +179,9 @@ class _GrowthPageState extends ConsumerState<GrowthPage>
                 .watch(filteredGrowthRecordsProvider)
                 .when(
                   data: (records) {
-                    if (records.isEmpty) {
+                    final sortedRecords = [...records]
+                      ..sort((a, b) => b.measurementDate.compareTo(a.measurementDate));
+                    if (sortedRecords.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -201,9 +207,9 @@ class _GrowthPageState extends ConsumerState<GrowthPage>
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppDimensions.spacingMedium,
                       ),
-                      itemCount: records.length,
+                      itemCount: sortedRecords.length,
                       itemBuilder: (context, index) {
-                        final record = records[index];
+                        final record = sortedRecords[index];
                         return _GrowthRecordCard(record: record);
                       },
                     );
@@ -316,12 +322,7 @@ class _GrowthRecordCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                PopupMenuButton(
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(child: Text('Edit')),
-                    const PopupMenuItem(child: Text('Delete')),
-                  ],
-                ),
+
               ],
             ),
             const SizedBox(height: AppDimensions.spacingSmall),
@@ -409,4 +410,9 @@ class _GrowthRecordCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _number(dynamic value, int fractionDigits) {
+  final number = value is num ? value.toDouble() : double.tryParse(value?.toString() ?? '');
+  return (number ?? 0).toStringAsFixed(fractionDigits);
 }
