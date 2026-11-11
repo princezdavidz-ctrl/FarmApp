@@ -17,6 +17,7 @@ import '../widgets/veterinary_visits_section.dart';
 import '../widgets/health_analytics_section.dart';
 import '../widgets/add_health_record_page.dart';
 import '../widgets/veterinary_requests_tab.dart';
+import '../../../../shared/widgets/farm_app_mark.dart';
 
 class HealthPage extends ConsumerStatefulWidget {
   const HealthPage({this.initialTypeFilter = 'all', super.key});
@@ -58,6 +59,7 @@ class _HealthPageState extends ConsumerState<HealthPage>
   @override
   Widget build(BuildContext context) {
     final role = ref.watch(authProvider).valueOrNull?.user.role;
+    final farmName = ref.watch(authProvider).valueOrNull?.selectedFarm?.name ?? 'Your farm';
     final canManageRecords = const {
       UserRole.farmOwner,
       UserRole.farmManager,
@@ -65,12 +67,15 @@ class _HealthPageState extends ConsumerState<HealthPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(switch (widget.initialTypeFilter) {
+        title: Row(children: [
+          const FarmAppMark(size: 28),
+          const SizedBox(width: 10),
+          Expanded(child: Text(switch (widget.initialTypeFilter) {
           'medication' => 'Medication Records',
           'deworming' => 'Deworming Records',
           'mortality' => 'Mortality Records',
           _ => 'Health Management',
-        }),
+        })),
         leading: IconButton(
           tooltip: 'Back to home',
           icon: const Icon(Icons.arrow_back),
@@ -81,11 +86,13 @@ class _HealthPageState extends ConsumerState<HealthPage>
           preferredSize: const Size.fromHeight(48),
           child: TabBar(
             controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: const [
-              Tab(text: 'Overview'),
-              Tab(text: 'Records'),
-              Tab(text: 'Analytics'),
-              Tab(text: 'Veterinarian'),
+              Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'Overview'),
+              Tab(icon: Icon(Icons.folder_open_outlined), text: 'Records'),
+              Tab(icon: Icon(Icons.analytics_outlined), text: 'Analytics'),
+              Tab(icon: Icon(Icons.medical_services_outlined), text: 'Veterinarian'),
             ],
           ),
         ),
@@ -130,6 +137,8 @@ class _HealthPageState extends ConsumerState<HealthPage>
         100,
       ),
       children: [
+        _HealthHeroCard(farmName: farmName, onViewRecords: () => _tabController.animateTo(1)),
+        const SizedBox(height: AppDimensions.spacingLarge),
         // Health Status Overview Cards
         _buildHealthOverview(ref),
         const SizedBox(height: AppDimensions.spacingLarge),
@@ -351,8 +360,9 @@ class _HealthPageState extends ConsumerState<HealthPage>
     return ref
         .watch(healthOverviewProvider)
         .when(
-          data: (stats) => GridView.count(
-            crossAxisCount: 2,
+          data: (stats) => GridView.extent(
+            maxCrossAxisExtent: 190,
+            mainAxisExtent: 148,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: AppDimensions.spacingMedium,
@@ -360,7 +370,6 @@ class _HealthPageState extends ConsumerState<HealthPage>
             // The overview cards contain an icon, value, and label. Giving
             // them a little more height prevents their content from clipping
             // on narrow phone screens.
-            childAspectRatio: 0.85,
             children: [
               HealthOverviewCard(
                 label: 'Healthy Pigs',
@@ -394,13 +403,13 @@ class _HealthPageState extends ConsumerState<HealthPage>
               ),
             ],
           ),
-          loading: () => GridView.count(
-            crossAxisCount: 2,
+          loading: () => GridView.extent(
+            maxCrossAxisExtent: 190,
+            mainAxisExtent: 148,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: AppDimensions.spacingMedium,
             mainAxisSpacing: AppDimensions.spacingMedium,
-            childAspectRatio: 0.85,
             children: List.generate(
               4,
               (index) =>
@@ -484,6 +493,37 @@ class _HealthPageState extends ConsumerState<HealthPage>
   }
 }
 
+class _HealthHeroCard extends StatelessWidget {
+  const _HealthHeroCard({required this.farmName, required this.onViewRecords});
+  final String farmName;
+  final VoidCallback onViewRecords;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(AppDimensions.spacingLarge),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.deepGreen, AppColors.primaryGreen]),
+      borderRadius: BorderRadius.circular(AppDimensions.radius),
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [const Icon(Icons.health_and_safety_outlined, color: Colors.white, size: 28), const SizedBox(width: 10), Expanded(child: Text(farmName, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700))), const Icon(Icons.pets_outlined, color: Colors.white70)]),
+      const SizedBox(height: 12),
+      Text('Herd health at a glance', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 4),
+      Text('Track treatments, vaccinations and follow-up care in one place.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+      const SizedBox(height: 16),
+      Align(alignment: Alignment.centerLeft, child: OutlinedButton.icon(onPressed: onViewRecords, style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white70)), icon: const Icon(Icons.folder_open_outlined, size: 18), label: const Text('Review health records'))),
+    ]),
+  );
+}
+
+class _RecordTag extends StatelessWidget {
+  const _RecordTag({required this.label, required this.color});
+  final String label;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)), child: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700)));
+}
+
 // Filter Chip Widget
 class _FilterChip extends StatelessWidget {
   final String label;
@@ -524,11 +564,7 @@ class _HealthRecordCard extends StatelessWidget {
   Widget build(BuildContext context) => Card(
     margin: const EdgeInsets.only(bottom: AppDimensions.spacingMedium),
     child: ListTile(
-      leading: Icon(
-        _getTypeIcon(record.type),
-        color: _getTypeColor(record.type),
-        size: 32,
-      ),
+      leading: Container(width: 44, height: 44, decoration: BoxDecoration(color: _getTypeColor(record.type).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)), child: Icon(_getTypeIcon(record.type), color: _getTypeColor(record.type))),
       title: Text(
         'Pig ${record.pigId}',
         style: Theme.of(context).textTheme.labelLarge,
@@ -538,13 +574,15 @@ class _HealthRecordCard extends StatelessWidget {
         children: [
           const SizedBox(height: 4),
           if (record.diagnosis != null) Text('Diagnosis: ${record.diagnosis}'),
-          Text(
-            'Date: ${record.visitDate.toString().split(' ')[0]}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text('Recorded ${record.visitDate.toString().split(' ')[0]}', style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 4, children: [
+            _RecordTag(label: _recordTypeLabel(record.type), color: _getTypeColor(record.type)),
+            _RecordTag(label: _recordStatusLabel(record.status), color: _recordStatusColor(record.status)),
+          ]),
         ],
       ),
-      isThreeLine: true,
+      isThreeLine: false,
       trailing: onEdit == null && onDelete == null
           ? null
           : PopupMenuButton(
@@ -565,6 +603,12 @@ class _HealthRecordCard extends StatelessWidget {
             ),
     ),
   );
+
+  String _recordTypeLabel(String type) => switch (type) { 'vaccination' => 'Vaccination', 'treatment' => 'Treatment', 'deworming' => 'Deworming', 'mortality' => 'Mortality', _ => 'Health' };
+
+  String _recordStatusLabel(String status) => status.replaceAll('_', ' ').split(' ').map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}').join(' ');
+
+  Color _recordStatusColor(String status) => switch (status) { 'healthy' => AppColors.success, 'recovering' => AppColors.warning, 'critical' || 'deceased' => AppColors.danger, 'due' => AppColors.info, _ => AppColors.mutedText };
 
   IconData _getTypeIcon(String type) {
     switch (type) {
