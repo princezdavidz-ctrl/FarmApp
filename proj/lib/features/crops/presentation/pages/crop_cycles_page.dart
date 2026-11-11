@@ -83,12 +83,103 @@ class CropCyclesPage extends ConsumerWidget {
                           await ref.read(cropCyclesApiProvider).delete(farmId, item['id'].toString());
                           ref.invalidate(cropCyclesProvider(farmId));
                         },
+                        onRecordHarvest: () => _showHarvestForm(context, ref, farmId, item),
                       ),
                   ],
                 ),
         ),
       ),
     );
+  }
+
+  Future<void> _showHarvestForm(
+    BuildContext context,
+    WidgetRef ref,
+    String farmId,
+    Map<String, dynamic> cycle,
+  ) async {
+    final formKey = GlobalKey<FormState>();
+    final yieldController = TextEditingController();
+    final notesController = TextEditingController(text: cycle['notes']?.toString() ?? '');
+    var harvestDate = DateTime.now();
+    var saving = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Record ${cycle['crop_name'] ?? 'crop'} harvest'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Actual harvest date'),
+                  subtitle: Text(_date(harvestDate)),
+                  trailing: const Icon(Icons.calendar_today_outlined),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: harvestDate,
+                      firstDate: DateTime.tryParse(cycle['planting_date']?.toString() ?? '') ?? DateTime(2000),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) setState(() => harvestDate = picked);
+                  },
+                ),
+                TextFormField(
+                  controller: yieldController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Actual yield (kg)'),
+                  validator: (value) {
+                    final parsed = double.tryParse(value ?? '');
+                    return parsed == null || parsed < 0 ? 'Enter a valid yield in kg' : null;
+                  },
+                ),
+                TextFormField(
+                  controller: notesController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Harvest notes (optional)'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: saving ? null : () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: saving ? null : () async {
+                if (!formKey.currentState!.validate()) return;
+                setState(() => saving = true);
+                try {
+                  await ref.read(cropCyclesApiProvider).update(
+                    farmId,
+                    cycle['id'].toString(),
+                    {
+                      'actual_harvest_date': _iso(harvestDate),
+                      'actual_yield_kg': double.parse(yieldController.text),
+                      'status': 'harvested',
+                      'notes': notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+                    },
+                  );
+                  ref.invalidate(cropCyclesProvider(farmId));
+                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                } catch (error) {
+                  if (dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text('Could not save harvest: $error')));
+                    setState(() => saving = false);
+                  }
+                }
+              },
+              child: Text(saving ? 'Saving…' : 'Save harvest'),
+            ),
+          ],
+        ),
+      ),
+    );
+    yieldController.dispose();
+    notesController.dispose();
   }
 
   Future<void> _showCropForm(BuildContext context, WidgetRef ref, String farmId) async {
@@ -230,10 +321,11 @@ class _SummaryValue extends StatelessWidget {
 }
 
 class _CropCycleCard extends StatelessWidget {
-  const _CropCycleCard({required this.item, required this.onStatusChanged, required this.onDelete});
+  const _CropCycleCard({required this.item, required this.onStatusChanged, required this.onDelete, required this.onRecordHarvest});
   final Map<String, dynamic> item;
   final ValueChanged<String> onStatusChanged;
   final VoidCallback onDelete;
+  final VoidCallback onRecordHarvest;
 
   @override
   Widget build(BuildContext context) {
@@ -283,8 +375,23 @@ class _CropCycleCard extends StatelessWidget {
             Text('Planted: ${item['planting_date'] ?? '—'}', style: Theme.of(context).textTheme.bodySmall),
             if (item['expected_harvest_date'] != null)
               Text('Expected harvest: ${item['expected_harvest_date']}', style: Theme.of(context).textTheme.bodySmall),
+            if (item['expected_yield_kg'] != null)
+              Text('Expected yield: ${item['expected_yield_kg']} kg', style: Theme.of(context).textTheme.bodySmall),
+            if (item['actual_harvest_date'] != null)
+              Text('Harvest date: ${item['actual_harvest_date']}', style: Theme.of(context).textTheme.bodySmall),
             if (item['actual_yield_kg'] != null)
-              Text('Harvest recorded: ${item['actual_yield_kg']} kg', style: Theme.of(context).textTheme.bodySmall),
+              Text('Actual yield: ${item['actual_yield_kg']} kg', style: Theme.of(context).textTheme.bodySmall),
+            if (!['harvested', 'failed'].contains(status)) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: onRecordHarvest,
+                  icon: const Icon(Icons.agriculture_outlined),
+                  label: const Text('Record harvest'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
