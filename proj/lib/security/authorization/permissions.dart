@@ -3,6 +3,7 @@ import 'roles.dart';
 enum AppPermission {
   viewDashboard,
   manageHerd,
+  manageCrops,
   manageBreeding,
   manageFeed,
   manageFinance,
@@ -24,6 +25,7 @@ abstract final class RolePermissions {
     UserRole.farmManager: {
       AppPermission.viewDashboard,
       AppPermission.manageHerd,
+      AppPermission.manageCrops,
       AppPermission.manageBreeding,
       AppPermission.manageFeed,
       AppPermission.viewSales,
@@ -35,6 +37,7 @@ abstract final class RolePermissions {
     UserRole.farmWorker: {
       AppPermission.viewDashboard,
       AppPermission.manageHerd,
+      AppPermission.manageCrops,
       AppPermission.manageFeed,
       AppPermission.viewTasks,
     },
