@@ -85,7 +85,7 @@ class AppController extends ChangeNotifier {
           error = profileError.toString().replaceFirst('Exception: ', '');
         }
         isOfflineDemo = false;
-        ${cfg.field} = {};
+        veterinarian = {};
         page = AppPage.login;
         _notify();
         return;
