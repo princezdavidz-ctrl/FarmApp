@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\FarmSalesController;
 use App\Http\Controllers\Api\V1\FarmSubscriptionController;
 use App\Http\Controllers\Api\V1\FarmSupportConversationController;
 use App\Http\Controllers\Api\V1\FarmTaskController;
+use App\Http\Controllers\Api\V1\CropCycleController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\HealthController;
@@ -136,6 +137,10 @@ Route::prefix('v1')->group(function () {
         Route::get('farms/{farm}/support-presence', [FarmSupportConversationController::class, 'presence']);
         Route::post('farms/{farm}/support-conversation/messages', [FarmSupportConversationController::class, 'storeMessage']);
         Route::patch('farms/{farm}/support-conversation/read', [FarmSupportConversationController::class, 'markAsRead']);
+        Route::get('farms/{farm}/crop-cycles', [CropCycleController::class, 'index']);
+        Route::post('farms/{farm}/crop-cycles', [CropCycleController::class, 'store']);
+        Route::patch('farms/{farm}/crop-cycles/{cropCycle}', [CropCycleController::class, 'update']);
+        Route::delete('farms/{farm}/crop-cycles/{cropCycle}', [CropCycleController::class, 'destroy']);
         Route::get('farms/{farm}/tasks', [FarmTaskController::class, 'index']);
         Route::post('farms/{farm}/tasks', [FarmTaskController::class, 'store']);
         Route::patch('farms/{farm}/tasks/{task}', [FarmTaskController::class, 'update']);
