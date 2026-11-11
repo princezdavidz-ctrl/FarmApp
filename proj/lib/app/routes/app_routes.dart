@@ -3,6 +3,7 @@ library;
 abstract final class AppRoutes {
   static const home = '/';
   static const herd = '/herd';
+  static const crops = '/crops';
   static const health = '/health';
   static const medication = '/health/medication';
   static const deworming = '/health/deworming';
