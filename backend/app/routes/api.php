@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\V1\FarmSubscriptionController;
 use App\Http\Controllers\Api\V1\FarmSupportConversationController;
 use App\Http\Controllers\Api\V1\FarmTaskController;
 use App\Http\Controllers\Api\V1\CropCycleController;
+use App\Http\Controllers\Api\V1\CropActivityController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\HealthController;
