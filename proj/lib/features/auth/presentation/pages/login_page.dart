@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
+import '../../../../shared/widgets/farm_app_mark.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../security/authorization/roles.dart';
 import '../../domain/entities/farm.dart';
@@ -130,11 +131,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ],
                         ),
-                        child: Icon(
-                          Icons.agriculture,
-                          size: 96,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                        child: const FarmAppMark(size: 96),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.spacingMedium),

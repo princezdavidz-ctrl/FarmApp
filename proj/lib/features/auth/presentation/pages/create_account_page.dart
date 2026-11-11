@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../shared/widgets/farm_app_mark.dart';
 import '../../../../security/authorization/roles.dart';
 import '../providers/auth_provider.dart';
 import '../providers/auth_providers.dart';
@@ -133,9 +134,14 @@ class _CreateAccountPageState extends ConsumerState<CreateAccountPage> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            const Center(child: FarmAppMark(size: 88)),
+            const SizedBox(height: 16),
             Text(
-              'Join Farm App',
-              style: Theme.of(context).textTheme.headlineMedium,
+              'Join FarmApp',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 8),
             const Text('Set up your account to start managing your farm.'),
