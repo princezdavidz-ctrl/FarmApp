@@ -1,9 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api.dart';
+
+const _offlineDemoEnabled = kDebugMode &&
+    bool.fromEnvironment('FARMAPP_ENABLE_OFFLINE_DEMO_LOGIN');
+const _offlineDemoEmail = 'test@exampl.com';
+const _offlineDemoPassword = 'Password@123';
 
 void main() {
   runApp(const FarmAppVeterinarianApp());
@@ -42,6 +48,7 @@ class AppController extends ChangeNotifier {
   String? otpDestination;
   String? paymentId;
   bool busy = false;
+  bool isOfflineDemo = false;
   String? error;
 
   Future<void> initialize() async {
@@ -77,6 +84,8 @@ class AppController extends ChangeNotifier {
         } else {
           error = profileError.toString().replaceFirst('Exception: ', '');
         }
+        isOfflineDemo = false;
+        veterinarian = {};
         page = AppPage.login;
         _notify();
         return;
@@ -144,6 +153,30 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> beginLogin(String identifier, String password) async {
+    if (_offlineDemoEnabled &&
+        identifier.trim().toLowerCase() == _offlineDemoEmail &&
+        password == _offlineDemoPassword) {
+      isOfflineDemo = true;
+      api.setAccessToken(null);
+      veterinarian = {
+        'status': 'approved',
+      'name': 'Demo Veterinarian',
+      'email': _offlineDemoEmail,
+      'phone': '+254700000003',
+      'clinic_name': 'FarmApp Demo Veterinary Clinic',
+      'county': 'Nairobi',
+      'license_number': 'DEMO-VET-001',
+      'specialization': 'General veterinary practice',
+      'subscription_expires_at': DateTime.now().add(const Duration(days: 365)).toIso8601String(),
+      };
+      plans = [];
+      veterinaryRequests = [];
+      activeVeterinaryRequest = null;
+      page = AppPage.home;
+      error = null;
+      _notify();
+      return;
+    }
     await _run(() async {
       final result = await api.login(identifier.trim(), password);
       if (result['otp_required'] != true || result['challenge_id'] is! String) {
@@ -284,11 +317,13 @@ class AppController extends ChangeNotifier {
   Future<void> logout() async {
     await _run(() async {
       try {
-        await api.logout();
+        if (!isOfflineDemo) await api.logout();
       } finally {
         api.setAccessToken(null);
         await _storage.delete(key: _tokenKey);
         await _storage.delete(key: _refreshTokenKey);
+        isOfflineDemo = false;
+        veterinarian = {};
         page = AppPage.login;
       }
     });
@@ -789,6 +824,15 @@ class _LoginPageState extends State<LoginPage> {
   final _password = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    if (_offlineDemoEnabled) {
+      _identifier.text = _offlineDemoEmail;
+      _password.text = _offlineDemoPassword;
+    }
+  }
+
+  @override
   void dispose() {
     _identifier.dispose();
     _password.dispose();
@@ -826,6 +870,21 @@ class _LoginPageState extends State<LoginPage> {
           icon: Icons.arrow_forward,
           onPressed: _signIn,
         ),
+        if (_offlineDemoEnabled) ...[
+          const SizedBox(height: 12),
+          const Text(
+            'Development demo · local access only',
+            style: TextStyle(color: _muted, fontSize: 12),
+          ),
+          PrimaryButton(
+            label: 'Continue with offline demo',
+            icon: Icons.wifi_off,
+            onPressed: () => widget.controller.beginLogin(
+              _identifier.text,
+              _password.text,
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         TextButton(
           onPressed: widget.controller.openApplication,
