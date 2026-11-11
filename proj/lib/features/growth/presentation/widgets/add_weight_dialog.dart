@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../herd/domain/entities/animal.dart';
@@ -55,7 +56,6 @@ class _AddWeightDialogState extends ConsumerState<AddWeightDialog> {
       return;
     }
 
-    
     final double? previousWeight = double.tryParse(
       previousWeightController.text,
     );
