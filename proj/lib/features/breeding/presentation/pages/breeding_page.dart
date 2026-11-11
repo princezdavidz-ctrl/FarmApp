@@ -5,6 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/components/bottom_navigation.dart';
 import '../../../herd/domain/entities/animal.dart';
 import '../../../herd/presentation/providers/herd_provider.dart';
+import '../providers/pregnancy_provider.dart';
 
 class BreedingPage extends ConsumerStatefulWidget {
   const BreedingPage({super.key});
@@ -55,7 +56,7 @@ class _BreedingPageState extends ConsumerState<BreedingPage> {
           ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedText),
         ),
         const SizedBox(height: 18),
-        _BreedingOverviewCard(pregnant: 12, dueSoon: 4, vaccinated: 48),
+        const _LiveBreedingOverview(),
         const SizedBox(height: 20),
         _Calendar(
           month: _month,
@@ -229,83 +230,125 @@ class _BreedingPageState extends ConsumerState<BreedingPage> {
   }
 }
 
-class _BreedingOverviewCard extends StatelessWidget {
-  const _BreedingOverviewCard({
-    required this.pregnant,
-    required this.dueSoon,
-    required this.vaccinated,
-  });
-
-  final int pregnant;
-  final int dueSoon;
-  final int vaccinated;
+class _LiveBreedingOverview extends ConsumerWidget {
+  const _LiveBreedingOverview();
 
   @override
-  Widget build(BuildContext context) {
-    final items = [
-      _Metric(label: 'Pregnant', value: '$pregnant', color: AppColors.pigPink),
-      _Metric(label: 'Due soon', value: '$dueSoon', color: AppColors.warmGold),
-      _Metric(label: 'Vaccinated', value: '$vaccinated', color: AppColors.info),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pregnancies = ref.watch(pregnancyProvider);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Insemination overview',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: items
-                  .map(
-                    (item) => Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: item.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.label,
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              item.value,
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ],
+    return pregnancies.when(
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(child: CircularProgressIndicator()),
         ),
       ),
+      error: (error, _) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              const Icon(Icons.cloud_off_outlined),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Breeding summary is unavailable.')),
+              TextButton(
+                onPressed: () => ref.invalidate(pregnancyProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (items) {
+        final active = items
+            .where(
+              (item) => item.status != 'farrowed' && item.status != 'aborted',
+            )
+            .toList();
+        final dueSoon = active.where((item) => item.isDueSoon).length;
+        final overdue = active.where((item) => item.isOverdue).length;
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Breeding overview',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _BreedingMetric(
+                        label: 'Active',
+                        value: active.length,
+                        color: AppColors.pigPink,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _BreedingMetric(
+                        label: 'Due soon',
+                        value: dueSoon,
+                        color: AppColors.warmGold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _BreedingMetric(
+                        label: 'Overdue',
+                        value: overdue,
+                        color: AppColors.danger,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
 
-class _Metric {
-  const _Metric({
+class _BreedingMetric extends StatelessWidget {
+  const _BreedingMetric({
     required this.label,
     required this.value,
     required this.color,
   });
 
   final String label;
-  final String value;
+  final int value;
   final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .12),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 6),
+        Text(
+          '$value',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Calendar extends StatelessWidget {
