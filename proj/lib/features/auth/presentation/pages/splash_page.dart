@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/farm_app_mark.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/routes/app_routes.dart';
@@ -115,12 +116,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.agriculture,
-                    size: 144,
-                    color: Theme.of(context).colorScheme.primary,
-                    semanticLabel: 'FarmApp',
-                  ),
+                  const FarmAppMark(size: 136),
                   const SizedBox(height: 18),
                   Text(
                     'FarmApp',
