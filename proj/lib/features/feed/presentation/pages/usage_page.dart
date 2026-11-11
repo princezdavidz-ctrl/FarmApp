@@ -24,12 +24,13 @@ class UsagePage extends ConsumerWidget {
           final records = [...snapshot.usage]
             ..sort((a, b) => b.usedAt.compareTo(a.usedAt));
           final now = DateTime.now();
-          final today = records.where((record) => _isSameDay(record.usedAt, now));
-          final thisMonth = records.where(
-            (record) =>
-                record.usedAt.year == now.year &&
-                record.usedAt.month == now.month,
+          final today = records.where(
+            (record) => _isSameDay(record.usedAt.toLocal(), now),
           );
+          final thisMonth = records.where((record) {
+            final localDate = record.usedAt.toLocal();
+            return localDate.year == now.year && localDate.month == now.month;
+          });
 
           return RefreshIndicator(
             onRefresh: () async => ref.refresh(feedProvider.future),
