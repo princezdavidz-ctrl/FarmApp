@@ -49,6 +49,7 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../shared/components/bottom_navigation.dart';
 import '../../shared/widgets/profile_avatar.dart';
+import '../../shared/widgets/farm_app_mark.dart';
 import '../../app/theme/app_colors.dart';
 import 'app_routes.dart';
 import 'route_guard.dart';
@@ -409,12 +410,19 @@ class _AppDrawer extends ConsumerWidget {
                 children: [
                   ProfileAvatar(initials: initials, radius: 26),
                   const SizedBox(height: 14),
-                  Text(
-                    'Farm App',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.inverseText,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Row(
+                    children: [
+                      const FarmAppMark(size: 30),
+                      const SizedBox(width: 10),
+                      Text(
+                        'FarmApp',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.inverseText,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -481,6 +489,12 @@ class _AppDrawer extends ConsumerWidget {
                       icon: Icons.point_of_sale_outlined,
                       title: l10n.sales,
                       route: AppRoutes.salesAndExpenses,
+                    ),
+                  if (allows(AppPermission.manageFinance))
+                    _ListTile(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Finance',
+                      route: AppRoutes.finance,
                     ),
                   _DrawerSectionLabel(l10n.workspace),
                   if (allows(AppPermission.viewReports))

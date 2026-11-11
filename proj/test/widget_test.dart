@@ -20,7 +20,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MyApp());
 
-    expect(find.byIcon(Icons.agriculture), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 2));
     expect(find.byType(Scaffold), findsOneWidget);
