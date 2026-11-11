@@ -354,10 +354,8 @@ class _DashboardState extends State<_Dashboard> {
   Widget build(BuildContext context) {
     final snapshot = widget.snapshot;
     final schedule = widget.schedule;
-    final usedToday = snapshot.usage
-        .where((item) => _isToday(item.usedAt))
-        .fold<double>(0, (sum, item) => sum + item.quantity);
-    final usageUnit = _usageUnit(snapshot.usage, snapshot.stock);
+    final todayUsage = snapshot.usage.where((item) => _isToday(item.usedAt));
+    final usedTodaySummary = _usageTotals(todayUsage);
     final nextSchedule = _nextScheduleName(schedule);
 
     return Column(
@@ -409,8 +407,10 @@ class _DashboardState extends State<_Dashboard> {
                       metrics: [
                         _Metric(
                           'Used today',
-                          _quantity(usedToday),
-                          usageUnit,
+                          usedTodaySummary.isEmpty ? '0' : usedTodaySummary,
+                          todayUsage.map((item) => item.unit).toSet().length <= 1
+                              ? (todayUsage.firstOrNull?.unit ?? _stockUnit(snapshot.stock))
+                              : 'totals shown by unit',
                           Icons.restaurant_rounded,
                           AppColors.aqua,
                         ),
@@ -865,50 +865,86 @@ class _ConsumptionRow extends StatelessWidget {
 class _AnalyticsCard extends StatelessWidget {
   const _AnalyticsCard({required this.usage});
   final List<FeedUsage> usage;
+
   @override
   Widget build(BuildContext context) {
-    final values = List.generate(7, (index) {
-      final day = DateTime.now().subtract(Duration(days: 6 - index));
-      return usage
-          .where(
-            (item) =>
-                item.usedAt.year == day.year &&
-                item.usedAt.month == day.month &&
-                item.usedAt.day == day.day,
-          )
-          .fold<double>(0, (sum, item) => sum + item.quantity);
-    });
-    final max = values.fold<double>(
-      1,
-      (current, value) => value > current ? value : current,
+    final units = usage.map((item) => item.unit).toSet().toList()..sort();
+    if (units.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('Record feed usage to see your 7-day consumption trends.'),
+        ),
+      );
+    }
+
+    final now = DateTime.now();
+    final days = List.generate(
+      7,
+      (index) => DateTime(now.year, now.month, now.day - (6 - index)),
     );
-    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Consumption', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 112,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  for (var index = 0; index < 7; index++)
-                    Expanded(
-                      child: _ChartBar(
-                        value: values[index] / max,
-                        label: labels[index],
-                        active: index == 6,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            Text('Consumption by unit', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            for (final unit in units) ...[
+              Text(unit, style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              _UnitConsumptionChart(unit: unit, days: days, usage: usage),
+              if (unit != units.last) const SizedBox(height: 18),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _UnitConsumptionChart extends StatelessWidget {
+  const _UnitConsumptionChart({
+    required this.unit,
+    required this.days,
+    required this.usage,
+  });
+
+  final String unit;
+  final List<DateTime> days;
+  final List<FeedUsage> usage;
+
+  @override
+  Widget build(BuildContext context) {
+    final values = days.map((day) {
+      return usage.where((item) {
+        return item.unit == unit &&
+            item.usedAt.year == day.year &&
+            item.usedAt.month == day.month &&
+            item.usedAt.day == day.day;
+      }).fold<double>(0, (sum, item) => sum + item.quantity);
+    }).toList();
+    final maxValue = values.fold<double>(
+      1,
+      (current, value) => value > current ? value : current,
+    );
+    const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return SizedBox(
+      height: 112,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (var index = 0; index < days.length; index++)
+            Expanded(
+              child: _ChartBar(
+                value: values[index] / maxValue,
+                label: weekdays[days[index].weekday - 1],
+                active: index == days.length - 1,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1004,8 +1040,15 @@ String _stockUnit(List<FeedStock> stock) => stock.isEmpty
     : stock.map((item) => item.unit).toSet().length == 1
     ? stock.first.unit
     : 'mixed units';
-String _usageUnit(List<FeedUsage> usage, List<FeedStock> stock) =>
-    usage.isNotEmpty ? usage.first.unit : _stockUnit(stock);
+String _usageTotals(Iterable<FeedUsage> usage) {
+  final totals = <String, double>{};
+  for (final item in usage) {
+    totals.update(item.unit, (value) => value + item.quantity,
+        ifAbsent: () => item.quantity);
+  }
+  final units = totals.keys.toList()..sort();
+  return units.map((unit) => '${_quantity(totals[unit]!)} $unit').join(' · ');
+}
 String? _nextScheduleName(List<FeedScheduleEntry> schedule) {
   final now = DateTime.now();
   final currentMinutes = now.hour * 60 + now.minute;
