@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
+import '../../../herd/domain/entities/animal.dart';
+import '../../../herd/presentation/providers/herd_provider.dart';
 
-class AddWeightDialog extends StatefulWidget {
+class AddWeightDialog extends ConsumerStatefulWidget {
   final Function(Map<String, dynamic>) onSubmit;
 
   const AddWeightDialog({super.key, required this.onSubmit});
 
   @override
-  State<AddWeightDialog> createState() => _AddWeightDialogState();
+  ConsumerState<AddWeightDialog> createState() => _AddWeightDialogState();
 }
 
-class _AddWeightDialogState extends State<AddWeightDialog> {
-  late TextEditingController pigIdController;
+class _AddWeightDialogState extends ConsumerState<AddWeightDialog> {
+  String? _selectedAnimalId;
   late TextEditingController currentWeightController;
   late TextEditingController previousWeightController;
   late TextEditingController targetWeightController;
@@ -24,7 +26,6 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
   @override
   void initState() {
     super.initState();
-    pigIdController = TextEditingController();
     currentWeightController = TextEditingController();
     previousWeightController = TextEditingController();
     targetWeightController = TextEditingController();
@@ -34,7 +35,6 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
 
   @override
   void dispose() {
-    pigIdController.dispose();
     currentWeightController.dispose();
     previousWeightController.dispose();
     targetWeightController.dispose();
@@ -44,25 +44,25 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
   }
 
   void _submitForm() {
-    if (pigIdController.text.isEmpty || currentWeightController.text.isEmpty) {
+    final currentWeight = double.tryParse(currentWeightController.text.trim());
+    if (_selectedAnimalId == null || currentWeight == null || currentWeight <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in Pig ID and Current Weight'),
+          content: Text('Select an animal and enter a valid weight greater than zero.'),
           backgroundColor: AppColors.danger,
         ),
       );
       return;
     }
 
-    final double currentWeight =
-        double.tryParse(currentWeightController.text) ?? 0;
+    
     final double? previousWeight = double.tryParse(
       previousWeightController.text,
     );
     final double? targetWeight = double.tryParse(targetWeightController.text);
 
     widget.onSubmit({
-      'animal_id': pigIdController.text,
+      'animal_id': _selectedAnimalId,
       'current_weight': currentWeight,
       'previous_weight': previousWeight,
       'target_weight': targetWeight,
@@ -74,6 +74,54 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
     });
   }
 
+  Widget _buildAnimalSelector() {
+    final animals = ref.watch(herdProvider);
+    return animals.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (error, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Animal list could not be loaded.'),
+          TextButton(
+            onPressed: () => ref.invalidate(herdProvider),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+      data: (items) {
+        final eligible = items.where((animal) => animal.status.toLowerCase() == 'active').toList()
+          ..sort((a, b) => a.tag.toLowerCase().compareTo(b.tag.toLowerCase()));
+        if (_selectedAnimalId != null &&
+            !eligible.any((animal) => animal.id == _selectedAnimalId)) {
+          _selectedAnimalId = null;
+        }
+        return DropdownButtonFormField<String>(
+          value: _selectedAnimalId,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: 'Animal *',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radius),
+            ),
+          ),
+          hint: Text(eligible.isEmpty ? 'No active animals found' : 'Select an animal'),
+          items: eligible.map((animal) => DropdownMenuItem<String>(
+            value: animal.id,
+            child: Text(_animalLabel(animal), overflow: TextOverflow.ellipsis),
+          )).toList(),
+          onChanged: eligible.isEmpty ? null : (value) => setState(() => _selectedAnimalId = value),
+        );
+      },
+    );
+  }
+
+  String _animalLabel(Animal animal) {
+    final name = animal.name?.trim();
+    return name == null || name.isEmpty
+        ? '${animal.tag} · ${animal.type} · ${animal.sex}'
+        : '${animal.tag} ($name) · ${animal.type}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -82,16 +130,8 @@ class _AddWeightDialogState extends State<AddWeightDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: pigIdController,
-              decoration: InputDecoration(
-                labelText: 'Pig ID *',
-                hintText: 'e.g., PG-104',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radius),
-                ),
-              ),
-            ),
+            _buildAnimalSelector(),
+            const SizedBox(height: AppDimensions.spacingMedium),
             const SizedBox(height: AppDimensions.spacingMedium),
             TextField(
               controller: currentWeightController,
