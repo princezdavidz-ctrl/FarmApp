@@ -824,6 +824,15 @@ class _LoginPageState extends State<LoginPage> {
   final _password = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    if (_offlineDemoEnabled) {
+      _identifier.text = _offlineDemoEmail;
+      _password.text = _offlineDemoPassword;
+    }
+  }
+
+  @override
   void dispose() {
     _identifier.dispose();
     _password.dispose();
@@ -871,8 +880,8 @@ class _LoginPageState extends State<LoginPage> {
             label: 'Continue with offline demo',
             icon: Icons.wifi_off,
             onPressed: () => widget.controller.beginLogin(
-              _offlineDemoEmail,
-              _offlineDemoPassword,
+              _identifier.text,
+              _password.text,
             ),
           ),
         ],
