@@ -45,13 +45,6 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    emailController.text = widget.initialEmail ?? '';
-    passwordController.text = widget.initialPassword ?? '';
-  }
-
-  @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
