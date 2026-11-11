@@ -257,7 +257,7 @@ class HerdPage extends ConsumerWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: filteredAnimals.length,
-                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: constraints.maxWidth >= 700 ? 480 : 420,
                               mainAxisExtent: 204,
                               crossAxisSpacing: AppDimensions.spacingMedium,
@@ -1259,7 +1259,7 @@ class _AnimalCard extends StatelessWidget {
                   _DetailChip(label: _statusLabel(animal.status)),
                   if (animal.isPregnant)
                     const _DetailChip(label: 'Pregnant'),
-                  _DetailChip(label: _titleCase(animal.sex)),
+                  _DetailChip(label: _statusLabel(animal.sex)),
                 ],
               ),
             ],
