@@ -253,17 +253,12 @@ class HerdPage extends ConsumerWidget {
                     else
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          final columns = constraints.maxWidth >= 700
-                              ? 3
-                              : constraints.maxWidth >= 380
-                              ? 2
-                              : 1;
                           return GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: filteredAnimals.length,
                             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 420,
+                              maxCrossAxisExtent: constraints.maxWidth >= 700 ? 480 : 420,
                               mainAxisExtent: 204,
                               crossAxisSpacing: AppDimensions.spacingMedium,
                               mainAxisSpacing: AppDimensions.spacingMedium,
@@ -1213,7 +1208,6 @@ class _AnimalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = animal.status == 'active';
     return Card(
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
