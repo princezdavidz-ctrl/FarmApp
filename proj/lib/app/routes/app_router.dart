@@ -482,6 +482,12 @@ class _AppDrawer extends ConsumerWidget {
                       title: l10n.sales,
                       route: AppRoutes.salesAndExpenses,
                     ),
+                  if (allows(AppPermission.manageFinance))
+                    _ListTile(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Finance',
+                      route: AppRoutes.finance,
+                    ),
                   _DrawerSectionLabel(l10n.workspace),
                   if (allows(AppPermission.viewReports))
                     _ListTile(
