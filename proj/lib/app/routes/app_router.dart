@@ -14,6 +14,7 @@ import '../../features/health/presentation/pages/deworming_page.dart';
 import '../../features/health/presentation/pages/mortality_page.dart';
 import '../../features/breeding/presentation/pages/breeding_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/feed/presentation/pages/formulation_page.dart';
 import '../../features/feed/presentation/providers/feed_provider.dart';
 import '../../features/inventory/presentation/pages/inventory_page.dart';
 import '../../features/growth/presentation/pages/growth_page.dart';
@@ -219,6 +220,13 @@ abstract final class AppRouter {
             builder: (context, state) => const PermissionRoute(
               permission: AppPermission.manageFeed,
               child: FeedPage(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.feedFormulations,
+            builder: (context, state) => const PermissionRoute(
+              permission: AppPermission.manageFeed,
+              child: FormulationPage(),
             ),
           ),
           GoRoute(

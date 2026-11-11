@@ -28,6 +28,13 @@ class _FeedPageState extends ConsumerState<FeedPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Feed Management'),
+        actions: [
+          IconButton(
+            tooltip: 'Feed formulations',
+            onPressed: () => context.go(AppRoutes.feedFormulations),
+            icon: const Icon(Icons.science_outlined),
+          ),
+        ],
         leading: IconButton(
           tooltip: 'Open menu',
           icon: const Icon(Icons.menu_rounded),
