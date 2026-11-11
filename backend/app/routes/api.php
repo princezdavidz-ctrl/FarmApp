@@ -131,6 +131,9 @@ Route::prefix('v1')->group(function () {
         Route::put('farms/{farm}/feed/reminders', [FeedController::class, 'syncReminders']);
         Route::post('farms/{farm}/feed/stock', [FeedController::class, 'storeStock']);
         Route::post('farms/{farm}/feed/usage', [FeedController::class, 'storeUsage']);
+        Route::get('farms/{farm}/feed/formulations', [FeedFormulationController::class, 'index']);
+        Route::post('farms/{farm}/feed/formulations', [FeedFormulationController::class, 'store']);
+        Route::delete('farms/{farm}/feed/formulations/{feedFormulation}', [FeedFormulationController::class, 'destroy']);
         Route::get('farms/{farm}/notifications', [FarmNotificationController::class, 'index']);
         Route::post('farms/{farm}/notifications/messages', [FarmNotificationController::class, 'sendMessage']);
         Route::patch('farms/{farm}/notifications/{notification}/read', [FarmNotificationController::class, 'markAsRead']);
