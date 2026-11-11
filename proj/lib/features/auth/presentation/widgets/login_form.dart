@@ -5,7 +5,7 @@ import '../../../../app/theme/app_dimensions.dart';
 class LoginForm extends StatefulWidget {
   const LoginForm({
     required this.onSubmit,
-    this.canSubmit = true,
+    this.canSubmit = true,\n    this.initialEmail,\n    this.initialPassword,\n    this.onOfflineDemoLogin,
     this.useOtp = false,
     this.onOtpToggle,
     this.onSendOtp,
@@ -14,7 +14,7 @@ class LoginForm extends StatefulWidget {
 
   final Future<void> Function(String email, String password, bool rememberMe)
   onSubmit;
-  final bool canSubmit;
+  final bool canSubmit;\n  final String? initialEmail;\n  final String? initialPassword;\n  final Future<void> Function(String email, String password)? onOfflineDemoLogin;
   final bool useOtp;
   final VoidCallback? onOtpToggle;
   final Future<void> Function(String email)? onSendOtp;
@@ -30,6 +30,13 @@ class _LoginFormState extends State<LoginForm> {
   bool rememberMe = false;
   bool isLoading = false;
   bool passwordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    emailController.text = widget.initialEmail ?? '';
+    passwordController.text = widget.initialPassword ?? '';
+  }
 
   @override
   void dispose() {
