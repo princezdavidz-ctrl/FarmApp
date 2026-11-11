@@ -14,6 +14,7 @@ abstract final class AppRoutes {
   static const settings = '/settings';
   static const settingsDetails = '/settings/details';
   static const feed = '/feed';
+  static const feedFormulations = '/feed/formulations';
   static const tasks = '/tasks';
   static const growth = '/growth';
   static const finance = '/finance';
