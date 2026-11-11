@@ -15,6 +15,7 @@ import '../../../notifications/presentation/providers/notifications_provider.dar
 import '../../../notifications/data/notifications_api.dart';
 import '../../../health/presentation/providers/health_providers.dart';
 import '../../../../shared/components/bottom_navigation.dart';
+import '../../../../shared/widgets/farm_app_mark.dart';
 import '../../../settings/presentation/providers/farm_access_provider.dart';
 import '../providers/farm_overview_provider.dart';
 
@@ -96,6 +97,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         : ref.watch(farmOverviewProvider(farmId));
     final firstName = session?.user.name.split(' ').first ?? 'there';
     final farmName = session?.selectedFarm?.name ?? 'Farm App';
+    final farmType = session?.selectedFarm?.farmingType ?? 'mixed';
+    final hasCropOperations = farmType == 'crops' || farmType == 'mixed';
     final registeredHerdCount = session?.selectedFarm?.registeredHerdCount ?? 0;
     final liveHerdCount = overview.valueOrNull?['herd_count'] as num?;
     final herdCount = liveHerdCount == null
@@ -125,6 +128,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           label: l10n.herdSize,
           value: '$herdCount',
           color: AppColors.primaryGreen,
+        ),
+      if (allows(AppPermission.manageCrops) && hasCropOperations)
+        _StatCard(
+          icon: Icons.agriculture_outlined,
+          label: 'Active crop cycles',
+          value: overview.valueOrNull?['active_crop_cycles']?.toString() ?? '—',
+          color: AppColors.leaf,
         ),
       if (allows(AppPermission.manageFeed))
         _StatCard(
@@ -156,7 +166,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           icon: const Icon(Icons.menu),
           onPressed: () => navigationScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(farmName, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Row(
+          children: [
+            const FarmAppMark(size: 28),
+            const SizedBox(width: 10),
+            Expanded(child: Text(farmName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: l10n.openNotifications,
@@ -344,9 +360,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       (item) => !item.isRead,
                     ),
                     onOpen: () => context.go(AppRoutes.notifications),
+                    onClear: () => _clearNotifications(notifications),
                   ),
                 ],
                 const SizedBox(height: AppDimensions.spacingLarge),
+                if (allows(AppPermission.manageCrops) && hasCropOperations) ...[
+                  _CropOverviewCard(
+                    activeCycles: overview.valueOrNull?['active_crop_cycles'] as num?,
+                    totalAcres: overview.valueOrNull?['crop_area_acres'] as num?,
+                    upcomingHarvests: overview.valueOrNull?['upcoming_harvest_count'] as num?,
+                    onTap: () => context.go(AppRoutes.crops),
+                  ),
+                  const SizedBox(height: AppDimensions.spacingLarge),
+                ],
                 if (allows(AppPermission.manageHerd)) ...[
                   _HerdStatusCard(
                     pregnant: pregnantCount,
@@ -374,14 +400,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                 ],
                 const SizedBox(height: AppDimensions.spacingLarge),
-                _SectionHeader(
-                  title: l10n.quickActions,
-                  actionLabel: 'Clear',
-                  onAction: () => _clearNotifications(notifications),
-                ),
+                _SectionHeader(title: l10n.quickActions),
                 const SizedBox(height: AppDimensions.spacingMedium),
-                GridView.count(
-                  crossAxisCount: 3,
+                GridView.extent(
+                  maxCrossAxisExtent: 124,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: AppDimensions.spacingMedium,
@@ -452,6 +474,90 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       ),
     );
   }
+}
+
+
+class _CropOverviewCard extends StatelessWidget {
+  const _CropOverviewCard({
+    required this.activeCycles,
+    required this.totalAcres,
+    required this.upcomingHarvests,
+    required this.onTap,
+  });
+
+  final num? activeCycles;
+  final num? totalAcres;
+  final num? upcomingHarvests;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacingLarge),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.leaf.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.agriculture_outlined, color: AppColors.leaf),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Crop farming', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        Text('Fields, growing cycles and harvests', style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mutedText)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios, size: 16),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.spacingMedium),
+              Row(
+                children: [
+                  Expanded(child: _CropMetric(label: 'Active cycles', value: activeCycles?.toString() ?? '—')),
+                  Expanded(child: _CropMetric(label: 'Acres in production', value: totalAcres?.toString() ?? '—')),
+                  Expanded(child: _CropMetric(label: 'Harvests in 30 days', value: upcomingHarvests?.toString() ?? '—')),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CropMetric extends StatelessWidget {
+  const _CropMetric({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(right: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.mutedText)),
+      ],
+    ),
+  );
 }
 
 class _RegisteredHerdBanner extends StatelessWidget {
@@ -760,10 +866,15 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _NotificationBanner extends StatelessWidget {
-  const _NotificationBanner({required this.notification, required this.onOpen});
+  const _NotificationBanner({
+    required this.notification,
+    required this.onOpen,
+    required this.onClear,
+  });
 
   final FarmNotification notification;
   final VoidCallback onOpen;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -783,7 +894,11 @@ class _NotificationBanner extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: IconButton(
+          tooltip: 'Mark all as read',
+          onPressed: onClear,
+          icon: const Icon(Icons.done_all),
+        ),
         onTap: onOpen,
       ),
     );
