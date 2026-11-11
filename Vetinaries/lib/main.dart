@@ -6,6 +6,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api.dart';
 
+const _offlineDemoEnabled = kDebugMode &&
+    bool.fromEnvironment('FARMAPP_ENABLE_OFFLINE_DEMO_LOGIN');
+const _offlineDemoEmail = 'test@exampl.com';
+const _offlineDemoPassword = 'Password@123';
+
 void main() {
   runApp(const FarmAppVeterinarianApp());
 }
@@ -317,6 +322,8 @@ class AppController extends ChangeNotifier {
         api.setAccessToken(null);
         await _storage.delete(key: _tokenKey);
         await _storage.delete(key: _refreshTokenKey);
+        isOfflineDemo = false;
+        veterinarian = {};
         page = AppPage.login;
       }
     });
