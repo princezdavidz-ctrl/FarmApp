@@ -28,10 +28,8 @@ class PregnancyPage extends ConsumerWidget {
         ),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(
-              child: Text(
-                'No pregnancy records yet. Add an insemination record to begin.',
-              ),
+            return _EmptyPregnancyState(
+              onAdd: () => _showAddPregnancy(context, ref),
             );
           }
           return RefreshIndicator(
@@ -39,8 +37,39 @@ class PregnancyPage extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               children: [
+                Text(
+                  'Breeding at a glance',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Track each sow from insemination through farrowing.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.mutedText,
+                  ),
+                ),
+                const SizedBox(height: 18),
                 _Summary(items: items),
-                const SizedBox(height: 16),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Pregnancy records',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                    Text(
+                      '${items.length} total',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppColors.mutedText,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 _PregnancyGrid(items: items),
               ],
             ),
@@ -215,6 +244,63 @@ class PregnancyPage extends ConsumerWidget {
   }
 }
 
+
+class _EmptyPregnancyState extends StatelessWidget {
+  const _EmptyPregnancyState({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withValues(alpha: .10),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.pregnant_woman_outlined,
+                size: 42,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Start tracking your pregnancies',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Record a sow’s insemination to calculate her expected farrowing date and follow her progress.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.mutedText,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('Record insemination'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _Summary extends StatelessWidget {
   const _Summary({required this.items});
   final List<Pregnancy> items;
@@ -255,17 +341,19 @@ class _PregnancyGrid extends StatelessWidget {
   final List<Pregnancy> items;
 
   @override
-  Widget build(BuildContext context) => GridView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: items.length,
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      mainAxisExtent: 224,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: constraints.maxWidth < 520 ? 420 : 340,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        mainAxisExtent: 232,
+      ),
+      itemBuilder: (context, index) => _PregnancyCard(pregnancy: items[index]),
     ),
-    itemBuilder: (context, index) => _PregnancyCard(pregnancy: items[index]),
   );
 }
 
@@ -344,11 +432,41 @@ class _PregnancyCard extends StatelessWidget {
                   : 'Not recorded',
             ),
             const Spacer(),
-            Text(
-              'Due ${_date(pregnancy.expectedFarrowingDate)} · ${_statusLabel(pregnancy.status)}',
-              style: Theme.of(context).textTheme.bodySmall,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Due ${_date(pregnancy.expectedFarrowingDate)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.mutedText,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _statusLabel(pregnancy.status),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
