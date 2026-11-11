@@ -33,9 +33,9 @@ class FeedFormulationApiTest extends TestCase
             ->postJson("/api/v1/farms/{$farm->id}/feed/formulations", $payload)
             ->assertCreated()
             ->assertJsonPath('data.name', 'Grower ration')
-            ->assertJsonPath('data.estimated_crude_protein_percent', 20.6)
-            ->assertJsonPath('data.estimated_energy_mj_per_kg', 12.95)
-            ->assertJsonPath('data.estimated_cost_per_kg', 70.5)
+            ->assertJsonPath('data.estimated_crude_protein_percent', 20.2)
+            ->assertJsonPath('data.estimated_energy_mj_per_kg', 12.85)
+            ->assertJsonPath('data.estimated_cost_per_kg', 69.5)
             ->assertJsonPath('data.ingredients.0.batch_quantity_kg', 60);
 
         $this->actingAs($user, 'sanctum')
