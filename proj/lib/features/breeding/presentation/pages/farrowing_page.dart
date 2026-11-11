@@ -39,7 +39,7 @@ class FarrowingPage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               children: [
                 Text(
-                  'Farrowing management',
+                  'Record farrowing outcome',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -62,7 +62,7 @@ class FarrowingPage extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Upcoming farrowings',
+                        'Pending litters',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
