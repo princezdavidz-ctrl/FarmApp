@@ -5,6 +5,7 @@ abstract final class AppRoutes {
   static const herd = '/herd';
   static const crops = '/crops';
   static const health = '/health';
+  static const vaccination = '/health/vaccination';
   static const medication = '/health/medication';
   static const deworming = '/health/deworming';
   static const mortality = '/health/mortality';
