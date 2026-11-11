@@ -75,7 +75,7 @@ class _HealthPageState extends ConsumerState<HealthPage>
           'deworming' => 'Deworming Records',
           'mortality' => 'Mortality Records',
           _ => 'Health Management',
-        })),
+        }))],
         leading: IconButton(
           tooltip: 'Back to home',
           icon: const Icon(Icons.arrow_back),
