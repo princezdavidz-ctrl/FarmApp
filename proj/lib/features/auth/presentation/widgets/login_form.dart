@@ -9,9 +9,6 @@ class LoginForm extends StatefulWidget {
     this.initialEmail,
     this.initialPassword,
     this.onOfflineDemoLogin,
-    this.initialEmail,
-    this.initialPassword,
-    this.onOfflineDemoLogin,
     this.useOtp = false,
     this.onOtpToggle,
     this.onSendOtp,
@@ -21,9 +18,6 @@ class LoginForm extends StatefulWidget {
   final Future<void> Function(String email, String password, bool rememberMe)
   onSubmit;
   final bool canSubmit;
-  final String? initialEmail;
-  final String? initialPassword;
-  final Future<void> Function(String email, String password)? onOfflineDemoLogin;
   final String? initialEmail;
   final String? initialPassword;
   final Future<void> Function(String email, String password)? onOfflineDemoLogin;
