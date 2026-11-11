@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../features/herd/presentation/pages/herd_page.dart';
+import '../../features/crops/presentation/pages/crop_cycles_page.dart';
 import '../../features/health/presentation/pages/health_page.dart';
 import '../../features/health/presentation/pages/medication_page.dart';
 import '../../features/health/presentation/pages/deworming_page.dart';
@@ -153,6 +154,13 @@ abstract final class AppRouter {
             builder: (context, state) => const PermissionRoute(
               permission: AppPermission.manageHerd,
               child: HerdPage(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.crops,
+            builder: (context, state) => const PermissionRoute(
+              permission: AppPermission.manageCrops,
+              child: CropCyclesPage(),
             ),
           ),
           GoRoute(
@@ -444,6 +452,12 @@ class _AppDrawer extends ConsumerWidget {
                     title: l10n.dashboard,
                     route: AppRoutes.home,
                   ),
+                  if (allows(AppPermission.manageCrops))
+                    _ListTile(
+                      icon: Icons.agriculture_outlined,
+                      title: 'Crop farming',
+                      route: AppRoutes.crops,
+                    ),
                   if (allows(AppPermission.manageHerd)) ...[
                     _ListTile(
                       icon: Icons.pets_outlined,
