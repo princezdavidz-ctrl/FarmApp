@@ -141,6 +141,10 @@ Route::prefix('v1')->group(function () {
         Route::post('farms/{farm}/crop-cycles', [CropCycleController::class, 'store']);
         Route::patch('farms/{farm}/crop-cycles/{cropCycle}', [CropCycleController::class, 'update']);
         Route::delete('farms/{farm}/crop-cycles/{cropCycle}', [CropCycleController::class, 'destroy']);
+        Route::get('farms/{farm}/crop-activities', [CropActivityController::class, 'index']);
+        Route::post('farms/{farm}/crop-activities', [CropActivityController::class, 'store']);
+        Route::patch('farms/{farm}/crop-activities/{cropActivity}', [CropActivityController::class, 'update']);
+        Route::delete('farms/{farm}/crop-activities/{cropActivity}', [CropActivityController::class, 'destroy']);
         Route::get('farms/{farm}/tasks', [FarmTaskController::class, 'index']);
         Route::post('farms/{farm}/tasks', [FarmTaskController::class, 'store']);
         Route::patch('farms/{farm}/tasks/{task}', [FarmTaskController::class, 'update']);
