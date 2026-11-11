@@ -26,12 +26,12 @@ class HealthAlertsSection extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'All pigs are healthy',
+                            'No active health alerts',
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(color: AppColors.success),
                           ),
                           Text(
-                            'No urgent cases at this time',
+                            'There are no open alerts in the records currently available.',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColors.text),
                           ),
@@ -56,10 +56,12 @@ class HealthAlertsSection extends ConsumerWidget {
           color: AppColors.dangerContainer,
           child: Padding(
             padding: const EdgeInsets.all(AppDimensions.spacingMedium),
-            child: Text(
-              'Failed to load alerts',
-              style: TextStyle(color: AppColors.danger),
-            ),
+            child: Row(children: [
+              const Icon(Icons.cloud_off_outlined, color: AppColors.danger),
+              const SizedBox(width: AppDimensions.spacingMedium),
+              const Expanded(child: Text('Could not load health alerts.')),
+              TextButton(onPressed: () => ref.invalidate(healthAlertsProvider), child: const Text('Retry')),
+            ]),
           ),
         ),
       );
