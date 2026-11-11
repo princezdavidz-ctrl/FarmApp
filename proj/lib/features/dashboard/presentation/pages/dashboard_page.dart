@@ -86,6 +86,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         permissions.contains(permission);
     final canViewOverview =
         allows(AppPermission.manageHerd) ||
+        allows(AppPermission.manageCrops) ||
         allows(AppPermission.manageFeed) ||
         allows(AppPermission.viewTasks) ||
         allows(AppPermission.viewSales);
@@ -387,6 +388,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   crossAxisSpacing: AppDimensions.spacingMedium,
                   childAspectRatio: 0.95,
                   children: [
+                    if (allows(AppPermission.manageCrops))
+                      _QuickAction(
+                        icon: Icons.agriculture_outlined,
+                        label: 'Crops',
+                        color: AppColors.leaf,
+                        onTap: () => context.go(AppRoutes.crops),
+                      ),
                     if (allows(AppPermission.manageHerd))
                       _QuickAction(
                         icon: Icons.pets_outlined,
