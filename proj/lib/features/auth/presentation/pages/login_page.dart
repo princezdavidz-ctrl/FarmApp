@@ -189,7 +189,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: AppDimensions.spacingMedium),
+                          if (_offlineDemoEnabled) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF4D6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFE7C66A)),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.wifi_off, color: Color(0xFF8A6415)),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Development mode: offline demo access is enabled on this build.',
+                                      style: TextStyle(color: Color(0xFF674B0D)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AppDimensions.spacingMedium),
+                          ],
                           LoginForm(
+                            initialEmail: _offlineDemoEnabled ? _offlineDemoEmail : null,
+                            initialPassword: _offlineDemoEnabled ? _offlineDemoPassword : null,
+                            onOfflineDemoLogin: _offlineDemoEnabled ? _loginOfflineDemo : null,
                             canSubmit: _agreementAccepted,
                             onSubmit: (identifier, password, rememberMe) async {
                               if (!_agreementAccepted) return;
