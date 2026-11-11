@@ -5,7 +5,13 @@ import '../../../../app/theme/app_dimensions.dart';
 class LoginForm extends StatefulWidget {
   const LoginForm({
     required this.onSubmit,
-    this.canSubmit = true,\n    this.initialEmail,\n    this.initialPassword,\n    this.onOfflineDemoLogin,
+    this.canSubmit = true,
+    this.initialEmail,
+    this.initialPassword,
+    this.onOfflineDemoLogin,
+    this.initialEmail,
+    this.initialPassword,
+    this.onOfflineDemoLogin,
     this.useOtp = false,
     this.onOtpToggle,
     this.onSendOtp,
@@ -14,7 +20,13 @@ class LoginForm extends StatefulWidget {
 
   final Future<void> Function(String email, String password, bool rememberMe)
   onSubmit;
-  final bool canSubmit;\n  final String? initialEmail;\n  final String? initialPassword;\n  final Future<void> Function(String email, String password)? onOfflineDemoLogin;
+  final bool canSubmit;
+  final String? initialEmail;
+  final String? initialPassword;
+  final Future<void> Function(String email, String password)? onOfflineDemoLogin;
+  final String? initialEmail;
+  final String? initialPassword;
+  final Future<void> Function(String email, String password)? onOfflineDemoLogin;
   final bool useOtp;
   final VoidCallback? onOtpToggle;
   final Future<void> Function(String email)? onSendOtp;
@@ -30,6 +42,13 @@ class _LoginFormState extends State<LoginForm> {
   bool rememberMe = false;
   bool isLoading = false;
   bool passwordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    emailController.text = widget.initialEmail ?? '';
+    passwordController.text = widget.initialPassword ?? '';
+  }
 
   @override
   void initState() {
@@ -156,6 +175,44 @@ class _LoginFormState extends State<LoginForm> {
                   ),
           ),
         ),
+        if (widget.onOfflineDemoLogin != null) ...[
+          const SizedBox(height: AppDimensions.spacingSmall),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isLoading || !widget.canSubmit
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setState(() => isLoading = true);
+                      try {
+                        await widget.onOfflineDemoLogin!(
+                          emailController.text.trim(),
+                          passwordController.text,
+                        );
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Offline demo credentials are invalid.'),
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) setState(() => isLoading = false);
+                      }
+                    },
+              icon: const Icon(Icons.wifi_off),
+              label: const Text('Continue with offline demo'),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Local demo only · no server authentication or real account access',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 11, color: Colors.black54),
+          ),
+        ],
       ],
     ),
   );
