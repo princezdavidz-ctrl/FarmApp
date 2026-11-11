@@ -5,12 +5,21 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../security/authorization/roles.dart';
+import '../../domain/entities/farm.dart';
+import '../../domain/entities/session.dart';
+import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/auth_providers.dart';
 import '../services/google_sign_in_service.dart';
 import '../services/apple_sign_in_service.dart';
 import '../widgets/login_form.dart';
 import '../widgets/server_settings_dialog.dart';
+
+const _offlineDemoEnabled = kDebugMode &&
+    bool.fromEnvironment('FARMAPP_ENABLE_OFFLINE_DEMO_LOGIN');
+const _offlineDemoEmail = 'test@exampl.com';
+const _offlineDemoPassword = 'Password@123';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +30,36 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   bool _agreementAccepted = false;
+
+  Future<void> _loginOfflineDemo(String email, String password) async {
+    if (!_offlineDemoEnabled ||
+        email.trim().toLowerCase() != _offlineDemoEmail ||
+        password != _offlineDemoPassword) {
+      throw StateError('Invalid offline demo credentials.');
+    }
+
+    final demoFarm = const Farm(
+      id: 'offline-demo-farm',
+      name: 'FarmApp Demo Farm',
+      location: 'Local demo workspace',
+    );
+    final session = Session(
+      accessToken: 'offline-demo-session',
+      refreshToken: 'offline-demo-refresh',
+      user: const User(
+        id: 'offline-demo-user',
+        name: 'FarmApp Demo User',
+        email: _offlineDemoEmail,
+        role: UserRole.farmOwner,
+      ),
+      farms: [demoFarm],
+      selectedFarm: demoFarm,
+    );
+
+    await ref.read(authServiceProvider).setRememberMe(false);
+    ref.read(authProvider.notifier).setSession(session);
+    if (mounted) context.go(AppRoutes.home);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +189,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: AppDimensions.spacingMedium),
+                          if (_offlineDemoEnabled) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF4D6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFE7C66A)),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.wifi_off, color: Color(0xFF8A6415)),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Development mode: offline demo access is enabled on this build.',
+                                      style: TextStyle(color: Color(0xFF674B0D)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AppDimensions.spacingMedium),
+                          ],
                           LoginForm(
+                            initialEmail: _offlineDemoEnabled ? _offlineDemoEmail : null,
+                            initialPassword: _offlineDemoEnabled ? _offlineDemoPassword : null,
+                            onOfflineDemoLogin: _offlineDemoEnabled ? _loginOfflineDemo : null,
                             canSubmit: _agreementAccepted,
                             onSubmit: (identifier, password, rememberMe) async {
                               if (!_agreementAccepted) return;
