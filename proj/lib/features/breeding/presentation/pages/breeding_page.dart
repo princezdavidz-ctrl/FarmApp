@@ -5,7 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/components/bottom_navigation.dart';
 import '../../../herd/domain/entities/animal.dart';
 import '../../../herd/presentation/providers/herd_provider.dart';
-import '../../../breeding/presentation/providers/pregnancy_provider.dart';
+import '../providers/pregnancy_provider.dart';
 
 class BreedingPage extends ConsumerStatefulWidget {
   const BreedingPage({super.key});
