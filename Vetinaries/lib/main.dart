@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -42,6 +43,7 @@ class AppController extends ChangeNotifier {
   String? otpDestination;
   String? paymentId;
   bool busy = false;
+  bool isOfflineDemo = false;
   String? error;
 
   Future<void> initialize() async {
@@ -77,6 +79,8 @@ class AppController extends ChangeNotifier {
         } else {
           error = profileError.toString().replaceFirst('Exception: ', '');
         }
+        isOfflineDemo = false;
+        ${cfg.field} = {};
         page = AppPage.login;
         _notify();
         return;
@@ -144,6 +148,30 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> beginLogin(String identifier, String password) async {
+    if (_offlineDemoEnabled &&
+        identifier.trim().toLowerCase() == _offlineDemoEmail &&
+        password == _offlineDemoPassword) {
+      isOfflineDemo = true;
+      api.setAccessToken(null);
+      veterinarian = {
+        'status': 'approved',
+      'name': 'Demo Veterinarian',
+      'email': _offlineDemoEmail,
+      'phone': '+254700000003',
+      'clinic_name': 'FarmApp Demo Veterinary Clinic',
+      'county': 'Nairobi',
+      'license_number': 'DEMO-VET-001',
+      'specialization': 'General veterinary practice',
+      'subscription_expires_at': DateTime.now().add(const Duration(days: 365)).toIso8601String(),
+      };
+      plans = [];
+      veterinaryRequests = [];
+      activeVeterinaryRequest = null;
+      page = AppPage.home;
+      error = null;
+      _notify();
+      return;
+    }
     await _run(() async {
       final result = await api.login(identifier.trim(), password);
       if (result['otp_required'] != true || result['challenge_id'] is! String) {
@@ -284,7 +312,7 @@ class AppController extends ChangeNotifier {
   Future<void> logout() async {
     await _run(() async {
       try {
-        await api.logout();
+        if (!isOfflineDemo) await api.logout();
       } finally {
         api.setAccessToken(null);
         await _storage.delete(key: _tokenKey);
@@ -826,6 +854,21 @@ class _LoginPageState extends State<LoginPage> {
           icon: Icons.arrow_forward,
           onPressed: _signIn,
         ),
+        if (_offlineDemoEnabled) ...[
+          const SizedBox(height: 12),
+          const Text(
+            'Development demo · local access only',
+            style: TextStyle(color: _muted, fontSize: 12),
+          ),
+          PrimaryButton(
+            label: 'Continue with offline demo',
+            icon: Icons.wifi_off,
+            onPressed: () => widget.controller.beginLogin(
+              _offlineDemoEmail,
+              _offlineDemoPassword,
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         TextButton(
           onPressed: widget.controller.openApplication,
