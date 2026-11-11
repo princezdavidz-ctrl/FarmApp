@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -7,6 +8,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'api.dart';
+
+const _offlineDemoEnabled = kDebugMode &&
+    bool.fromEnvironment('FARMAPP_ENABLE_OFFLINE_DEMO_LOGIN');
+const _offlineDemoEmail = 'test@exampl.com';
+const _offlineDemoPassword = 'Password@123';
 
 void main() => runApp(const FarmAppDriverApp());
 
@@ -31,6 +37,7 @@ class DriverController extends ChangeNotifier {
   String? otpDestination;
   String? paymentId;
   bool busy = false;
+  bool isOfflineDemo = false;
   String? error;
   StreamSubscription<Position>? _locationSubscription;
   Timer? _locationHeartbeat;
@@ -147,6 +154,32 @@ class DriverController extends ChangeNotifier {
   }
 
   Future<void> beginLogin(String identifier, String password) async {
+    if (_offlineDemoEnabled &&
+        identifier.trim().toLowerCase() == _offlineDemoEmail &&
+        password == _offlineDemoPassword) {
+      isOfflineDemo = true;
+      api.setAccessToken(null);
+      driver = {
+        'status': 'approved',
+      'name': 'Demo Driver',
+      'email': _offlineDemoEmail,
+      'phone': '+254700000001',
+      'license_number': 'DEMO-DRIVER',
+      'vehicle_registration': 'DEMO 001',
+      'service_types': ['herd', 'supplies'],
+      'available': false,
+      'latitude': -1.286389,
+      'longitude': 36.817223,
+      'subscription_expires_at': DateTime.now().add(const Duration(days: 365)).toIso8601String(),
+      };
+      plans = [];
+      transportRequests = [];
+      activeTransportRequest = null;
+      page = DriverPage.home;
+      error = null;
+      notifyListeners();
+      return;
+    }
     await _run(() async {
       final result = await api.login(identifier.trim(), password);
       if (result['otp_required'] != true || result['challenge_id'] is! String) {
@@ -400,20 +433,21 @@ class DriverController extends ChangeNotifier {
     await _run(() async {
       try {
         await _stopLocationUpdates();
-        if (isAvailable && hasActiveSubscription) {
+        if (!isOfflineDemo && isAvailable && hasActiveSubscription) {
           await api.updateLocation(
             latitude: position.latitude,
             longitude: position.longitude,
             available: false,
           );
         }
-        await api.logout();
+        if (!isOfflineDemo) await api.logout();
       } finally {
         api.setAccessToken(null);
         await _stopLocationUpdates();
         await _storage.delete(key: _accessKey);
         await _storage.delete(key: _refreshKey);
         driver = {};
+        isOfflineDemo = false;
         page = DriverPage.login;
       }
     });
@@ -814,6 +848,20 @@ class _LoginPageState extends State<LoginPage> {
           onPressed: () =>
               widget.controller.beginLogin(identifier.text, password.text),
         ),
+        if (_offlineDemoEnabled) ...[
+          const SizedBox(height: 12),
+          const Text(
+            'Development demo · local access only',
+            style: TextStyle(color: _muted, fontSize: 12),
+          ),
+          _PrimaryButton(
+            label: 'Continue with offline demo',
+            onPressed: () => widget.controller.beginLogin(
+              _offlineDemoEmail,
+              _offlineDemoPassword,
+            ),
+          ),
+        ],
       ],
     ),
   );
@@ -971,7 +1019,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             children: [
-              TileLayer(
+              if (!controller.isOfflineDemo)
+                TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.drivers',
               ),
