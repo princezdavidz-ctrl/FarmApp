@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../domain/entities/pregnancy.dart';
 import '../providers/pregnancy_provider.dart';
 
@@ -14,76 +15,226 @@ class FarrowingPage extends ConsumerWidget {
       appBar: AppBar(title: const Text('Farrowing')),
       body: pregnancies.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$error', textAlign: TextAlign.center),
-              TextButton(
-                onPressed: () => ref.invalidate(pregnancyProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, _) => _FarrowingError(
+          message: '$error',
+          onRetry: () => ref.invalidate(pregnancyProvider),
         ),
         data: (items) {
           final pending = items
               .where(
                 (item) => item.status != 'farrowed' && item.status != 'aborted',
               )
-              .toList();
+              .toList()
+            ..sort(
+              (a, b) => a.expectedFarrowingDate.compareTo(
+                b.expectedFarrowingDate,
+              ),
+            );
+          final dueSoon = pending.where((item) => item.isDueSoon).length;
+          final overdue = pending.where((item) => item.isOverdue).length;
 
-          final body = [
-            Card(
-              color: Colors.green.shade50,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          return RefreshIndicator(
+            onRefresh: () async => ref.refresh(pregnancyProvider.future),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              children: [
+                Text(
+                  'Record farrowing outcome',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Prepare for each litter and record outcomes when piglets arrive.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.mutedText,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _FarrowingSummary(
+                  pending: pending.length,
+                  dueSoon: dueSoon,
+                  overdue: overdue,
+                ),
+                const SizedBox(height: 22),
+                Row(
                   children: [
-                    const Text(
-                      'Record farrowing outcome',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        'Pending litters',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
-                    const SizedBox(height: 8),
                     Text(
-                      pending.isEmpty
-                          ? 'No litters are currently pending.'
-                          : '${pending.length} sow${pending.length == 1 ? '' : 's'} due for farrowing.',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      '${pending.length} pending',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppColors.mutedText,
+                      ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 12),
+                if (pending.isEmpty)
+                  const _EmptyFarrowingState()
+                else
+                  ...pending.map(
+                    (item) => _FarrowingCard(pregnancy: item),
+                  ),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Pending litters',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            if (pending.isEmpty)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text('No pending farrowing records yet.'),
-                ),
-              )
-            else
-              ...pending.map((item) => _FarrowingCard(pregnancy: item)),
-          ];
-
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-            children: body,
           );
         },
       ),
     );
   }
+}
+
+
+class _FarrowingSummary extends StatelessWidget {
+  const _FarrowingSummary({
+    required this.pending,
+    required this.dueSoon,
+    required this.overdue,
+  });
+
+  final int pending;
+  final int dueSoon;
+  final int overdue;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _FarrowingMetric(
+              label: 'Pending',
+              value: pending,
+              color: AppColors.primaryGreen,
+              icon: Icons.pets_outlined,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _FarrowingMetric(
+              label: 'Due soon',
+              value: dueSoon,
+              color: AppColors.warmGold,
+              icon: Icons.event_available_outlined,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _FarrowingMetric(
+              label: 'Overdue',
+              value: overdue,
+              color: AppColors.danger,
+              icon: Icons.warning_amber_rounded,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _FarrowingMetric extends StatelessWidget {
+  const _FarrowingMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  final String label;
+  final int value;
+  final Color color;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, color: color, size: 20),
+      const SizedBox(height: 8),
+      Text(
+        '$value',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    ],
+  );
+}
+
+class _EmptyFarrowingState extends StatelessWidget {
+  const _EmptyFarrowingState();
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.event_available_outlined,
+            size: 42,
+            color: AppColors.primaryGreen,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No upcoming farrowings',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Active pregnancy records will appear here, ordered by their expected farrowing date.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.mutedText,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _FarrowingError extends StatelessWidget {
+  const _FarrowingError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_outlined, size: 40),
+          const SizedBox(height: 12),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Try again'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _FarrowingCard extends StatelessWidget {
@@ -93,9 +244,19 @@ class _FarrowingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dueText = pregnancy.daysUntilFarrowing == null
+    final days = pregnancy.daysUntilFarrowing;
+    final dueText = days == null
         ? 'Date pending'
-        : '${pregnancy.daysUntilFarrowing} days until farrowing';
+        : days < 0
+        ? '${days.abs()} days overdue'
+        : days == 0
+        ? 'Due today'
+        : '$days days remaining';
+    final statusColor = pregnancy.isOverdue
+        ? AppColors.danger
+        : pregnancy.isDueSoon
+        ? AppColors.warmGold
+        : AppColors.primaryGreen;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -117,17 +278,43 @@ class _FarrowingCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Due ${_formatDate(pregnancy.expectedFarrowingDate)} • $dueText',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        'Expected ${_formatDate(pregnancy.expectedFarrowingDate)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.mutedText,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Chip(
-                  label: Text(_statusLabel(pregnancy.status)),
-                  backgroundColor: Colors.green.shade50,
+                  label: Text(
+                    _statusLabel(pregnancy.status),
+                    style: TextStyle(color: statusColor),
+                  ),
+                  backgroundColor: statusColor.withValues(alpha: .12),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: .08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.schedule_outlined, size: 18, color: statusColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    dueText,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
