@@ -8,6 +8,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/components/bottom_navigation.dart';
+import '../../../../shared/widgets/farm_app_mark.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../breeding/presentation/providers/pregnancy_provider.dart';
 import '../../domain/entities/animal.dart';
@@ -31,7 +32,13 @@ class HerdPage extends ConsumerWidget {
     final canAutoFillHerd = herd.hasValue && remainingRegistrationCount > 0;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.herdPageTitle),
+        title: Row(
+          children: [
+            const FarmAppMark(size: 28),
+            const SizedBox(width: 10),
+            Expanded(child: Text(l10n.herdPageTitle)),
+          ],
+        ),
         leading: IconButton(
           tooltip: l10n.openMenu,
           icon: const Icon(Icons.menu),
@@ -183,6 +190,13 @@ class HerdPage extends ConsumerWidget {
                       color: AppColors.primaryGreen,
                     ),
                     const SizedBox(height: AppDimensions.spacingMedium),
+                    _HerdMetricsGrid(
+                      active: animals.where((animal) => animal.status == 'active').length,
+                      sows: animals.where((animal) => animal.type == 'sow').length,
+                      piglets: animals.where((animal) => animal.type == 'piglet').length,
+                      boars: animals.where((animal) => animal.type == 'boar').length,
+                    ),
+                    const SizedBox(height: AppDimensions.spacingMedium),
                     if (registrationSlots.isNotEmpty) ...[
                       const SizedBox(height: AppDimensions.spacingMedium),
                       _RegistrationSlotsGrid(
@@ -239,22 +253,16 @@ class HerdPage extends ConsumerWidget {
                     else
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          final columns = constraints.maxWidth >= 700
-                              ? 3
-                              : constraints.maxWidth >= 380
-                              ? 2
-                              : 1;
                           return GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: filteredAnimals.length,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: columns,
-                                  crossAxisSpacing: AppDimensions.spacingMedium,
-                                  mainAxisSpacing: AppDimensions.spacingMedium,
-                                  childAspectRatio: columns == 1 ? 1.6 : 0.65,
-                                ),
+                            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: constraints.maxWidth >= 700 ? 480 : 420,
+                              mainAxisExtent: 204,
+                              crossAxisSpacing: AppDimensions.spacingMedium,
+                              mainAxisSpacing: AppDimensions.spacingMedium,
+                            ),
                             itemBuilder: (context, index) {
                               final animal = filteredAnimals[index];
                               return _AnimalCard(
@@ -864,6 +872,82 @@ class _AnimalPregnancyReport extends ConsumerWidget {
       .join(' ');
 }
 
+
+class _HerdMetricsGrid extends StatelessWidget {
+  const _HerdMetricsGrid({
+    required this.active,
+    required this.sows,
+    required this.piglets,
+    required this.boars,
+  });
+
+  final int active;
+  final int sows;
+  final int piglets;
+  final int boars;
+
+  @override
+  Widget build(BuildContext context) => GridView.extent(
+    maxCrossAxisExtent: 160,
+    mainAxisExtent: 104,
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    crossAxisSpacing: AppDimensions.spacingSmall,
+    mainAxisSpacing: AppDimensions.spacingSmall,
+    children: [
+      _HerdMetricCard(label: 'Active', value: active, icon: Icons.favorite_outline, color: AppColors.success),
+      _HerdMetricCard(label: 'Sows', value: sows, icon: Icons.pets_outlined, color: AppColors.pigPink),
+      _HerdMetricCard(label: 'Piglets', value: piglets, icon: Icons.child_care_outlined, color: AppColors.warmGold),
+      _HerdMetricCard(label: 'Boars', value: boars, icon: Icons.pets, color: AppColors.info),
+    ],
+  );
+}
+
+class _HerdMetricCard extends StatelessWidget {
+  const _HerdMetricCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$value', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _HerdSummary extends StatelessWidget {
   const _HerdSummary({
     required this.label,
@@ -1124,7 +1208,6 @@ class _AnimalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = animal.status == 'active';
     return Card(
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
@@ -1173,8 +1256,10 @@ class _AnimalCard extends StatelessWidget {
                 spacing: 6,
                 runSpacing: 4,
                 children: [
-                  _DetailChip(label: active ? 'Healthy' : animal.status),
-                  const _DetailChip(label: 'Pen not set'),
+                  _DetailChip(label: _statusLabel(animal.status)),
+                  if (animal.isPregnant)
+                    const _DetailChip(label: 'Pregnant'),
+                  _DetailChip(label: _statusLabel(animal.sex)),
                 ],
               ),
             ],
@@ -1247,6 +1332,12 @@ class _DetailChip extends StatelessWidget {
     child: Text(label, style: Theme.of(context).textTheme.labelSmall),
   );
 }
+
+String _statusLabel(String status) => status
+    .replaceAll('_', ' ')
+    .split(' ')
+    .map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}')
+    .join(' ');
 
 String _ageLabel(DateTime? birthDate) {
   if (birthDate == null) return 'Age not set';
