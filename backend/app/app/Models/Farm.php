@@ -112,6 +112,12 @@ class Farm extends Model
         return $this->hasMany(FeedUsage::class);
     }
 
+    /** @return HasMany<FeedFormulation, Farm> */
+    public function feedFormulations(): HasMany
+    {
+        return $this->hasMany(FeedFormulation::class);
+    }
+
     /** @return HasMany<Payment, Farm> */
     public function payments(): HasMany
     {
