@@ -5,6 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/components/bottom_navigation.dart';
 import '../../../herd/domain/entities/animal.dart';
 import '../../../herd/presentation/providers/herd_provider.dart';
+import '../../domain/entities/pregnancy.dart';
 import '../providers/pregnancy_provider.dart';
 
 class BreedingPage extends ConsumerStatefulWidget {
@@ -17,7 +18,6 @@ class BreedingPage extends ConsumerStatefulWidget {
 class _BreedingPageState extends ConsumerState<BreedingPage> {
   late DateTime _month;
   late DateTime _selectedDay;
-  final Map<DateTime, List<_BreedingEvent>> _events = {};
 
   @override
   void initState() {
@@ -27,78 +27,112 @@ class _BreedingPageState extends ConsumerState<BreedingPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Insemination calendar'),
-      leading: IconButton(
-        tooltip: 'Open menu',
-        icon: const Icon(Icons.menu),
-        onPressed: () => navigationScaffoldKey.currentState?.openDrawer(),
+  Widget build(BuildContext context) {
+    final records = ref.watch(pregnancyProvider);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Breeding calendar'),
+        leading: IconButton(
+          tooltip: 'Open menu',
+          icon: const Icon(Icons.menu),
+          onPressed: () => navigationScaffoldKey.currentState?.openDrawer(),
+        ),
       ),
-    ),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _addEvent,
-      icon: const Icon(Icons.add),
-      label: const Text('Set event'),
-    ),
-    body: ListView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
-      children: [
-        Text(
-          'Plan every insemination milestone',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Set insemination, pregnancy-check, and farrowing dates for your herd.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedText),
-        ),
-        const SizedBox(height: 18),
-        const _LiveBreedingOverview(),
-        const SizedBox(height: 20),
-        _Calendar(
-          month: _month,
-          selectedDay: _selectedDay,
-          events: _events,
-          onPrevious: () =>
-              setState(() => _month = DateTime(_month.year, _month.month - 1)),
-          onNext: () =>
-              setState(() => _month = DateTime(_month.year, _month.month + 1)),
-          onSelected: (day) => setState(() => _selectedDay = day),
-        ),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              _dateTitle(_selectedDay),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            TextButton.icon(
-              onPressed: _addEvent,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        if ((_events[_selectedDay] ?? []).isEmpty)
-          _EmptySchedule(onAdd: _addEvent)
-        else
-          ..._events[_selectedDay]!.map(
-            (event) => _EventCard(
-              event: event,
-              onDelete: () =>
-                  setState(() => _events[_selectedDay]!.remove(event)),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addInsemination,
+        icon: const Icon(Icons.add),
+        label: const Text('Record insemination'),
+      ),
+      body: records.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off_outlined, size: 40),
+                const SizedBox(height: 12),
+                const Text(
+                  'The breeding calendar could not be loaded.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(pregnancyProvider),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Try again'),
+                ),
+              ],
             ),
           ),
-      ],
-    ),
-  );
+        ),
+        data: (items) {
+          final events = _eventsFor(items);
+          final selectedEvents = events[_dateOnly(_selectedDay)] ?? [];
+          return RefreshIndicator(
+            onRefresh: () async => ref.refresh(pregnancyProvider.future),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
+              children: [
+                Text(
+                  'Plan every breeding milestone',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'See recorded inseminations, pregnancy checks and expected or actual farrowing dates.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.mutedText,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const _LiveBreedingOverview(),
+                const SizedBox(height: 20),
+                _Calendar(
+                  month: _month,
+                  selectedDay: _selectedDay,
+                  events: events,
+                  onPrevious: () => setState(
+                    () => _month = DateTime(_month.year, _month.month - 1),
+                  ),
+                  onNext: () => setState(
+                    () => _month = DateTime(_month.year, _month.month + 1),
+                  ),
+                  onSelected: (day) => setState(() => _selectedDay = day),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _dateTitle(_selectedDay),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    Text(
+                      '${selectedEvents.length} milestones',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AppColors.mutedText,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (selectedEvents.isEmpty)
+                  _EmptySchedule(onAdd: _addInsemination)
+                else
+                  ...selectedEvents.map((event) => _EventCard(event: event)),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-  Future<void> _addEvent() async {
+  Future<void> _addInsemination() async {
     late final List<Animal> animals;
     try {
       animals = await ref.read(herdProvider.future);
@@ -122,112 +156,148 @@ class _BreedingPageState extends ConsumerState<BreedingPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Add an active female pig in Herd before scheduling an insemination event.',
+            'Add an active female pig in Herd before recording insemination.',
           ),
         ),
       );
       return;
     }
-    var date = _selectedDay;
-    var type = _BreedingEventType.mating;
+
     var sowId = femalePigs.first.id;
-    final event = await showModalBottomSheet<_BreedingEvent>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            24,
-            24,
-            24 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Set insemination event',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                initialValue: sowId,
-                decoration: const InputDecoration(
-                  labelText: 'Female pig (Pig ID)',
-                ),
-                items: femalePigs
-                    .map(
-                      (pig) => DropdownMenuItem(
-                        value: pig.id,
-                        child: Text('${pig.tag} · Pig ID ${pig.id}'),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) =>
-                    setSheetState(() => sowId = value ?? sowId),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<_BreedingEventType>(
-                initialValue: type,
-                decoration: const InputDecoration(labelText: 'Event type'),
-                items: _BreedingEventType.values
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: Text(value.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) => setSheetState(() => type = value ?? type),
-              ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    firstDate: DateTime.now().subtract(
-                      const Duration(days: 365),
-                    ),
-                    lastDate: DateTime.now().add(const Duration(days: 730)),
-                    initialDate: date,
-                  );
-                  if (picked != null) {
-                    setSheetState(() => date = _dateOnly(picked));
-                  }
-                },
-                icon: const Icon(Icons.calendar_month_outlined),
-                label: Text('Date: ${_dateTitle(date)}'),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(
-                    sheetContext,
-                    _BreedingEvent(
-                      sowId: sowId,
-                      sowTag: femalePigs
-                          .firstWhere((pig) => pig.id == sowId)
-                          .tag,
-                      type: type,
+    var matingDate = _selectedDay;
+    final semenController = TextEditingController();
+    try {
+      final confirmed = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (context, setSheetState) => Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              20 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Record insemination',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: sowId,
+                    decoration: const InputDecoration(labelText: 'Female pig'),
+                    items: femalePigs
+                        .map(
+                          (pig) => DropdownMenuItem(
+                            value: pig.id,
+                            child: Text('${pig.tag} · Pig ID ${pig.id}'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) =>
+                        setSheetState(() => sowId = value ?? sowId),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Insemination date'),
+                    subtitle: Text(_dateTitle(matingDate)),
+                    trailing: const Icon(Icons.calendar_month_outlined),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(
+                          const Duration(days: 365),
+                        ),
+                        initialDate: matingDate,
+                      );
+                      if (picked != null) {
+                        setSheetState(() => matingDate = _dateOnly(picked));
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: semenController,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Semen used (optional)',
+                      hintText: 'Breed, source or batch',
                     ),
                   ),
-                  child: const Text('Save event'),
-                ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(sheetContext, true),
+                    child: Text(
+                      'Save insemination · due ${_dateTitle(matingDate.add(const Duration(days: 114)))}',
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
+      );
+      if (confirmed != true || !mounted) return;
+      await ref.read(pregnancyProvider.notifier).create(
+        sowId: sowId,
+        matingDate: matingDate,
+        semenUsed: semenController.text.trim(),
+        status: 'suspected',
+      );
+      if (!mounted) return;
+      setState(() {
+        _selectedDay = _dateOnly(matingDate);
+        _month = DateTime(matingDate.year, matingDate.month);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Insemination record saved.')),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save insemination: $error')),
+        );
+      }
+    } finally {
+      semenController.dispose();
+    }
+  }
+}
+
+Map<DateTime, List<_BreedingEvent>> _eventsFor(List<Pregnancy> records) {
+  final events = <DateTime, List<_BreedingEvent>>{};
+  void add(DateTime? date, Pregnancy pregnancy, _BreedingEventType type) {
+    if (date == null) return;
+    final key = _dateOnly(date);
+    events.putIfAbsent(key, () => []).add(
+      _BreedingEvent(
+        sowId: pregnancy.sowId,
+        sowTag: pregnancy.sowTag ?? 'Sow ${pregnancy.sowId}',
+        type: type,
       ),
     );
-    if (event == null || !mounted) return;
-    setState(() {
-      _selectedDay = date;
-      _month = DateTime(date.year, date.month);
-      _events.putIfAbsent(date, () => []).add(event);
-    });
   }
+
+  for (final record in records) {
+    add(record.matingDate, record, _BreedingEventType.mating);
+    add(record.confirmationDate, record, _BreedingEventType.pregnancyCheck);
+    if (record.actualFarrowingDate != null) {
+      add(record.actualFarrowingDate, record, _BreedingEventType.farrowed);
+    } else if (record.status != 'aborted' && record.status != 'farrowed') {
+      add(record.expectedFarrowingDate, record, _BreedingEventType.farrowing);
+    }
+  }
+  for (final dayEvents in events.values) {
+    dayEvents.sort((a, b) => a.type.index.compareTo(b.type.index));
+  }
+  return events;
 }
 
 class _LiveBreedingOverview extends ConsumerWidget {
@@ -490,11 +560,12 @@ class _EmptySchedule extends StatelessWidget {
 }
 
 class _EventCard extends StatelessWidget {
-  const _EventCard({required this.event, required this.onDelete});
+  const _EventCard({required this.event});
   final _BreedingEvent event;
-  final VoidCallback onDelete;
+
   @override
   Widget build(BuildContext context) => Card(
+    margin: const EdgeInsets.only(bottom: 8),
     child: ListTile(
       leading: CircleAvatar(
         backgroundColor: event.type.color.withValues(alpha: .15),
@@ -502,7 +573,7 @@ class _EventCard extends StatelessWidget {
       ),
       title: Text(event.type.label),
       subtitle: Text('${event.sowTag} · Pig ID ${event.sowId}'),
-      trailing: IconButton(onPressed: onDelete, icon: const Icon(Icons.close)),
+      trailing: const Icon(Icons.chevron_right),
     ),
   );
 }
@@ -518,23 +589,26 @@ class _BreedingEvent {
   final _BreedingEventType type;
 }
 
-enum _BreedingEventType { mating, pregnancyCheck, farrowing }
+enum _BreedingEventType { mating, pregnancyCheck, farrowing, farrowed }
 
 extension on _BreedingEventType {
   String get label => switch (this) {
-    _BreedingEventType.mating => 'Insemination',
-    _BreedingEventType.pregnancyCheck => 'Pregnancy check',
+    _BreedingEventType.mating => 'Insemination recorded',
+    _BreedingEventType.pregnancyCheck => 'Pregnancy confirmed',
     _BreedingEventType.farrowing => 'Expected farrowing',
+    _BreedingEventType.farrowed => 'Farrowing recorded',
   };
   IconData get icon => switch (this) {
     _BreedingEventType.mating => Icons.favorite_outline,
     _BreedingEventType.pregnancyCheck => Icons.health_and_safety_outlined,
-    _BreedingEventType.farrowing => Icons.child_friendly_outlined,
+    _BreedingEventType.farrowing => Icons.event_available_outlined,
+    _BreedingEventType.farrowed => Icons.pets_outlined,
   };
   Color get color => switch (this) {
     _BreedingEventType.mating => AppColors.pigPink,
     _BreedingEventType.pregnancyCheck => AppColors.primaryGreen,
     _BreedingEventType.farrowing => AppColors.warmGold,
+    _BreedingEventType.farrowed => AppColors.info,
   };
 }
 
