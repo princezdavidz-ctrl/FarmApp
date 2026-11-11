@@ -100,6 +100,7 @@ class CropCyclesPage extends ConsumerWidget {
   ) async {
     final formKey = GlobalKey<FormState>();
     final yieldController = TextEditingController();
+    final revenueController = TextEditingController(text: cycle['actual_revenue_kes']?.toString() ?? '');
     final notesController = TextEditingController(text: cycle['notes']?.toString() ?? '');
     final plantedOn = DateTime.tryParse(cycle['planting_date']?.toString() ?? '') ?? DateTime(2000);
     final today = DateTime.now();
@@ -141,6 +142,16 @@ class CropCyclesPage extends ConsumerWidget {
                   },
                 ),
                 TextFormField(
+                  controller: revenueController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Harvest revenue (KES, optional)'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return null;
+                    final parsed = double.tryParse(value);
+                    return parsed == null || parsed < 0 ? 'Enter a valid revenue amount' : null;
+                  },
+                ),
+                TextFormField(
                   controller: notesController,
                   maxLines: 3,
                   decoration: const InputDecoration(labelText: 'Harvest notes (optional)'),
@@ -161,6 +172,7 @@ class CropCyclesPage extends ConsumerWidget {
                     {
                       'actual_harvest_date': _iso(harvestDate),
                       'actual_yield_kg': double.parse(yieldController.text),
+                      'actual_revenue_kes': double.tryParse(revenueController.text),
                       'status': 'harvested',
                       'notes': notesController.text.trim().isEmpty ? null : notesController.text.trim(),
                     },
@@ -181,6 +193,7 @@ class CropCyclesPage extends ConsumerWidget {
       ),
     );
     yieldController.dispose();
+    revenueController.dispose();
     notesController.dispose();
   }
 
@@ -383,6 +396,19 @@ class _CropCycleCard extends StatelessWidget {
               Text('Harvest date: ${item['actual_harvest_date']}', style: Theme.of(context).textTheme.bodySmall),
             if (item['actual_yield_kg'] != null)
               Text('Actual yield: ${item['actual_yield_kg']} kg', style: Theme.of(context).textTheme.bodySmall),
+            if (item['yield_kg_per_acre'] != null)
+              Text('Yield per acre: ${item['yield_kg_per_acre']} kg', style: Theme.of(context).textTheme.bodySmall),
+            if ((double.tryParse(item['activity_cost_kes']?.toString() ?? '') ?? 0) > 0 || item['actual_revenue_kes'] != null) ...[
+              const SizedBox(height: 10),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                if (item['activity_cost_kes'] != null)
+                  _InfoChip(label: 'Recorded costs: KES ${item['activity_cost_kes']}'),
+                if (item['actual_revenue_kes'] != null)
+                  _InfoChip(label: 'Revenue: KES ${item['actual_revenue_kes']}'),
+                if (item['gross_profit_kes'] != null)
+                  _InfoChip(label: 'Recorded margin: KES ${item['gross_profit_kes']}'),
+              ]),
+            ],
             if (!['harvested', 'failed'].contains(status)) ...[
               const SizedBox(height: 12),
               Align(

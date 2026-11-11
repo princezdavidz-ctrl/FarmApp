@@ -16,6 +16,7 @@ class CropCycleController extends Controller
     {
         $this->authorizeView($request, $farm);
         $cycles = $farm->cropCycles()
+            ->withSum('activities as activity_cost_kes', 'cost')
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->toString();
@@ -27,6 +28,23 @@ class CropCycleController extends Controller
             ->orderBy('expected_harvest_date')
             ->latest('planting_date')
             ->get();
+
+        $cycles->each(function (CropCycle $cycle): void {
+            $cost = round((float) ($cycle->activity_cost_kes ?? 0), 2);
+            $cycle->setAttribute('activity_cost_kes', $cost);
+            $cycle->setAttribute(
+                'gross_profit_kes',
+                $cycle->actual_revenue_kes === null
+                    ? null
+                    : round((float) $cycle->actual_revenue_kes - $cost, 2),
+            );
+            $cycle->setAttribute(
+                'yield_kg_per_acre',
+                (float) $cycle->area_acres > 0 && $cycle->actual_yield_kg !== null
+                    ? round((float) $cycle->actual_yield_kg / (float) $cycle->area_acres, 2)
+                    : null,
+            );
+        });
 
         return response()->json(['data' => $cycles]);
     }

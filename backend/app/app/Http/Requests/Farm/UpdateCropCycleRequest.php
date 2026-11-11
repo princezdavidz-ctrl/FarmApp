@@ -25,6 +25,7 @@ class UpdateCropCycleRequest extends FormRequest
             'status' => ['sometimes', Rule::in(['planned', 'planted', 'growing', 'harvested', 'failed'])],
             'expected_yield_kg' => ['sometimes', 'nullable', 'numeric', 'gte:0'],
             'actual_yield_kg' => ['sometimes', 'nullable', 'numeric', 'gte:0'],
+            'actual_revenue_kes' => ['sometimes', 'nullable', 'numeric', 'gte:0', 'max:999999999999'],
             'notes' => ['sometimes', 'nullable', 'string', 'max:4000'],
         ];
     }
