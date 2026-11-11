@@ -101,7 +101,7 @@ class _HealthPageState extends ConsumerState<HealthPage>
         controller: _tabController,
         children: [
           // Overview Tab
-          _buildOverviewTab(context, ref),
+          _buildOverviewTab(context, ref, farmName),
           // Records Tab
           _buildRecordsTab(context, ref, canManageRecords),
           // Analytics Tab
@@ -127,6 +127,7 @@ class _HealthPageState extends ConsumerState<HealthPage>
   Widget _buildOverviewTab(
     BuildContext context,
     WidgetRef ref,
+    String farmName,
   ) => RefreshIndicator(
     onRefresh: () => ref.refresh(healthRecordsProvider.future),
     child: ListView(
