@@ -101,7 +101,9 @@ class CropCyclesPage extends ConsumerWidget {
     final formKey = GlobalKey<FormState>();
     final yieldController = TextEditingController();
     final notesController = TextEditingController(text: cycle['notes']?.toString() ?? '');
-    var harvestDate = DateTime.now();
+    final plantedOn = DateTime.tryParse(cycle['planting_date']?.toString() ?? '') ?? DateTime(2000);
+    final today = DateTime.now();
+    var harvestDate = today.isBefore(plantedOn) ? plantedOn : today;
     var saving = false;
 
     await showDialog<void>(
@@ -123,7 +125,7 @@ class CropCyclesPage extends ConsumerWidget {
                     final picked = await showDatePicker(
                       context: context,
                       initialDate: harvestDate,
-                      firstDate: DateTime.tryParse(cycle['planting_date']?.toString() ?? '') ?? DateTime(2000),
+                      firstDate: plantedOn,
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                     );
                     if (picked != null) setState(() => harvestDate = picked);
