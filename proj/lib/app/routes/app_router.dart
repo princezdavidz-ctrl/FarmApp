@@ -7,6 +7,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../features/herd/presentation/pages/herd_page.dart';
 import '../../features/crops/presentation/pages/crop_cycles_page.dart';
 import '../../features/health/presentation/pages/health_page.dart';
+import '../../features/health/presentation/pages/vaccination_page.dart';
 import '../../features/health/presentation/pages/medication_page.dart';
 import '../../features/health/presentation/pages/deworming_page.dart';
 import '../../features/health/presentation/pages/mortality_page.dart';
@@ -168,6 +169,13 @@ abstract final class AppRouter {
             builder: (context, state) => const PermissionRoute(
               permission: AppPermission.manageHerd,
               child: HealthPage(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.vaccination,
+            builder: (context, state) => const PermissionRoute(
+              permission: AppPermission.manageHerd,
+              child: VaccinationPage(),
             ),
           ),
           GoRoute(
@@ -468,6 +476,11 @@ class _AppDrawer extends ConsumerWidget {
                       icon: Icons.health_and_safety_outlined,
                       title: l10n.health,
                       route: AppRoutes.health,
+                    ),
+                    _ListTile(
+                      icon: Icons.vaccines_outlined,
+                      title: 'Vaccinations',
+                      route: AppRoutes.vaccination,
                     ),
                     _ListTile(
                       icon: Icons.medication_outlined,
