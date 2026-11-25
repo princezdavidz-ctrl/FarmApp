@@ -2,7 +2,7 @@ name: FarmApp CI
 
 on:
   push:
-    branches: [main, "chore/**", "fix/**", "feature/**"]
+    branches: [main, "chore/**", "fix/**", "feature/**", "feat/**"]
   pull_request:
     branches: [main]
 
@@ -75,3 +75,16 @@ jobs:
       - name: Build CRM
         working-directory: crm
         run: npm run build
+
+  deployment-config:
+    name: Production Compose configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate production Compose configuration
+        run: |
+          cp backend/app/.env.example backend/app/.env
+          docker compose \
+            -f backend/docker-compose.yml \
+            -f backend/docker-compose.production.yml \
+            config --quiet
