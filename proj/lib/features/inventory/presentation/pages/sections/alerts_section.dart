@@ -12,9 +12,36 @@ class AlertsSection extends ConsumerWidget {
     final alerts = ref.watch(inventoryAlertsProvider);
 
     return alerts.when(
-      data: (alertList) => ListView(
+      data: (alertList) => RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(inventoryItemsProvider.future);
+          await ref.read(inventoryAlertsProvider.notifier).generateAlerts();
+        },
+        child: ListView(
         padding: const EdgeInsets.all(AppDimensions.pagePadding),
         children: [
+          FilledButton.icon(
+            onPressed: () async {
+              try {
+                await ref.read(inventoryItemsProvider.future);
+                await ref.read(inventoryAlertsProvider.notifier).generateAlerts();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Inventory alerts refreshed')),
+                  );
+                }
+              } catch (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Could not refresh alerts: $error')),
+                  );
+                }
+              }
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Refresh inventory alerts'),
+          ),
+          const SizedBox(height: AppDimensions.spacingMedium),
           if (alertList.isEmpty)
             Center(
               child: Padding(
@@ -173,6 +200,7 @@ class AlertsSection extends ConsumerWidget {
               ],
             ),
         ],
+      ),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(child: Text('Error: $error')),
