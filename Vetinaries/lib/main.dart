@@ -43,6 +43,10 @@ class AppController extends ChangeNotifier {
   Map<String, dynamic>? activeVeterinaryRequest;
   Timer? _requestTimer;
   bool _loadingRequests = false;
+  DateTime? requestsUpdatedAt;
+
+  bool get isRefreshingRequests => _loadingRequests;
+
   String? applicationReference;
   String? challengeId;
   String? otpDestination;
@@ -273,6 +277,7 @@ class AppController extends ChangeNotifier {
           : [];
       final active = response['active_request'];
       activeVeterinaryRequest = active is Map ? _map(active) : null;
+      requestsUpdatedAt = DateTime.now();
       _notify();
     } catch (exception) {
       error = exception.toString().replaceFirst('Exception: ', '');
@@ -1172,16 +1177,43 @@ class HomePage extends StatelessWidget {
           value: controller.veterinarian['license_number']?.toString() ?? '—',
         ),
         const SizedBox(height: 16),
-        Text(
-          controller.activeVeterinaryRequest == null
-              ? 'Nearby farm requests'
-              : 'Active farm request',
-          style: const TextStyle(
-            color: _ink,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                controller.activeVeterinaryRequest == null
+                    ? 'Nearby farm requests'
+                    : 'Active farm request',
+                style: const TextStyle(
+                  color: _ink,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Refresh farm requests',
+              onPressed: controller.isRefreshingRequests
+                  ? null
+                  : controller.refreshVeterinaryRequests,
+              icon: controller.isRefreshingRequests
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+            ),
+          ],
         ),
+        if (controller.requestsUpdatedAt != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Updated ${TimeOfDay.fromDateTime(controller.requestsUpdatedAt!).format(context)}',
+              style: const TextStyle(color: _muted, fontSize: 12),
+            ),
+          ),
         if (controller.activeVeterinaryRequest case final active?)
           _VeterinaryRequestCard(
             request: active,
