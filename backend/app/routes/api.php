@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\V1\FarmTaskController;
 use App\Http\Controllers\Api\V1\CropCycleController;
 use App\Http\Controllers\Api\V1\CropActivityController;
 use App\Http\Controllers\Api\V1\CropPlotController;
+use App\Http\Controllers\Api\V1\SoilTestController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FeedFormulationController;
 use App\Http\Controllers\Api\V1\GrowthController;
