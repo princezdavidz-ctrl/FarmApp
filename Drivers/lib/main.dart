@@ -496,7 +496,7 @@ class DriverController extends ChangeNotifier {
         if (hasActiveSubscription) {
           page = DriverPage.home;
           if (isAvailable) _startLocationUpdates();
-          _startRequestPolling();
+          _syncRequestPolling();
         } else {
           plans = await api.plans();
           page = DriverPage.plans;
