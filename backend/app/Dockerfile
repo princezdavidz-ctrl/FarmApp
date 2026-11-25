@@ -6,10 +6,7 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --opti
 
 FROM php:8.4-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor libzip libpq \
-    && apk add --no-cache --virtual .build-deps libzip-dev oniguruma-dev postgresql-dev \
-    && docker-php-ext-install pdo_mysql pdo_pgsql bcmath opcache zip \
-    && apk del .build-deps
+RUN apk add --no-cache nginx supervisor libzip libpq     && apk add --no-cache --virtual .build-deps libzip-dev oniguruma-dev postgresql-dev libxml2-dev     && docker-php-ext-install pdo_mysql pdo_pgsql bcmath mbstring xml opcache zip     && apk del .build-deps
 
 WORKDIR /var/www/html
 
