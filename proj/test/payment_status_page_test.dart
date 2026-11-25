@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:proj/features/subscription/presentation/pages/payment_status_page.dart';
 
 void main() {
@@ -8,13 +8,13 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
-        home: PaymentStatusPage(
-          amount: 500,
-          currency: 'KES',
-          merchantRequestId: 'merchant-1',
-          checkoutRequestId: 'checkout-1',
+          home: PaymentStatusPage(
+            amount: 500,
+            currency: 'KES',
+            merchantRequestId: 'merchant-1',
+            checkoutRequestId: 'checkout-1',
+          ),
         ),
-      ),
       ),
     );
 
