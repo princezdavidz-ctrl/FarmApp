@@ -35,6 +35,12 @@ class CropPlot extends Model
         return $this->hasMany(CropCycle::class);
     }
 
+    /** @return HasMany<SoilTest, CropPlot> */
+    public function soilTests(): HasMany
+    {
+        return $this->hasMany(SoilTest::class);
+    }
+
     /** @return BelongsTo<Farm, CropPlot> */
     public function farm(): BelongsTo
     {
