@@ -139,9 +139,11 @@ class _PaymentMethodPageState extends ConsumerState<PaymentMethodPage> {
       context.go(
         AppRoutes.paymentStatus,
         extra: {
-          'amount': amount,
-          'currency': currency,
+          'amount': payment['amount'] ?? amount,
+          'currency': payment['currency'] ?? currency,
           'payment_method': _selectedMethod,
+          'farm_id': selectedFarm.id,
+          'payment_id': payment['id'] ?? '',
           'merchant_request_id': payment['merchant_request_id'] ?? '',
           'checkout_request_id': payment['checkout_request_id'] ?? '',
           'result_description': resultDescription,
