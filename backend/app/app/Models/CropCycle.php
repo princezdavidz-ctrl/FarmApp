@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CropCycle extends Model
 {
     protected $fillable = [
-        'farm_id', 'plot_name', 'crop_name', 'variety', 'area_acres',
+        'farm_id', 'crop_plot_id', 'plot_name', 'crop_name', 'variety', 'area_acres',
         'planting_date', 'expected_harvest_date', 'actual_harvest_date',
         'status', 'expected_yield_kg', 'actual_yield_kg', 'actual_revenue_kes', 'notes',
     ];
@@ -31,6 +31,12 @@ class CropCycle extends Model
     public function farm(): BelongsTo
     {
         return $this->belongsTo(Farm::class);
+    }
+
+    /** @return BelongsTo<CropPlot, CropCycle> */
+    public function cropPlot(): BelongsTo
+    {
+        return $this->belongsTo(CropPlot::class);
     }
 
     /** @return HasMany<CropActivity, CropCycle> */

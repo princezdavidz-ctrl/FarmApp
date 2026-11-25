@@ -14,7 +14,15 @@ class UpdateCropCycleRequest extends FormRequest
 
     public function rules(): array
     {
+        $farmId = $this->route('farm')?->id;
+
         return [
+            'crop_plot_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('crop_plots', 'id')->where('farm_id', $farmId),
+            ],
             'plot_name' => ['sometimes', 'required', 'string', 'max:120'],
             'crop_name' => ['sometimes', 'required', 'string', 'max:120'],
             'variety' => ['sometimes', 'nullable', 'string', 'max:120'],

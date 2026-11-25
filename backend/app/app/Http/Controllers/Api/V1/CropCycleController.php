@@ -16,6 +16,7 @@ class CropCycleController extends Controller
     {
         $this->authorizeView($request, $farm);
         $cycles = $farm->cropCycles()
+            ->with('cropPlot:id,name,area_acres')
             ->withSum('activities as activity_cost_kes', 'cost')
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->filled('search'), function ($query) use ($request) {
@@ -52,18 +53,26 @@ class CropCycleController extends Controller
     public function store(StoreCropCycleRequest $request, Farm $farm): JsonResponse
     {
         $this->authorizeManage($request, $farm);
-        $cycle = $farm->cropCycles()->create($request->validated());
+        $attributes = $request->validated();
+        if (!empty($attributes['crop_plot_id'])) {
+            $attributes['plot_name'] = $farm->cropPlots()->whereKey($attributes['crop_plot_id'])->value('name');
+        }
+        $cycle = $farm->cropCycles()->create($attributes);
 
-        return response()->json(['data' => $cycle], 201);
+        return response()->json(['data' => $cycle->load('cropPlot:id,name,area_acres')], 201);
     }
 
     public function update(UpdateCropCycleRequest $request, Farm $farm, CropCycle $cropCycle): JsonResponse
     {
         $this->assertBelongsToFarm($farm, $cropCycle);
         $this->authorizeManage($request, $farm);
-        $cropCycle->update($request->validated());
+        $attributes = $request->validated();
+        if (!empty($attributes['crop_plot_id'])) {
+            $attributes['plot_name'] = $farm->cropPlots()->whereKey($attributes['crop_plot_id'])->value('name');
+        }
+        $cropCycle->update($attributes);
 
-        return response()->json(['data' => $cropCycle->fresh()]);
+        return response()->json(['data' => $cropCycle->fresh()->load('cropPlot:id,name,area_acres')]);
     }
 
     public function destroy(Request $request, Farm $farm, CropCycle $cropCycle): JsonResponse
