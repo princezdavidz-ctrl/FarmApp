@@ -1153,11 +1153,30 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return _LoadError(
-            error: snapshot.error!,
-            onRetry: () => setState(
-              () => _deliveriesFuture = widget.api.fetchBuyerDeliveries(),
-            ),
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(24),
+            children: [
+              const SizedBox(height: 100),
+              const _BrandIcon(size: 48),
+              const SizedBox(height: 12),
+              const Center(
+                child: Text(
+                  'Could not load delivery updates. Pull down to retry.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: FilledButton.icon(
+                  onPressed: () => unawaited(
+                    _refreshDeliveries(showError: true),
+                  ),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Try again'),
+                ),
+              ),
+            ],
           );
         }
         final deliveries = snapshot.data ?? const <BuyerDelivery>[];
