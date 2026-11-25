@@ -55,7 +55,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         leading: IconButton(
           tooltip: l10n.openMenu,
           icon: const Icon(Icons.menu),
-          onPressed: () => navigationScaffoldKey.currentState?.openDrawer(),
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
       floatingActionButton: canManage && session?.selectedFarm != null
