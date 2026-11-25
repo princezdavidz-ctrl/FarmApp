@@ -11,6 +11,7 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../security/authorization/permissions.dart';
 import '../../../../security/authorization/roles.dart';
 import '../../../../shared/components/bottom_navigation.dart';
+import '../../../../shared/components/bottom_navigation.dart';
 import '../../data/farm_task.dart';
 import '../providers/farm_tasks_provider.dart';
 
