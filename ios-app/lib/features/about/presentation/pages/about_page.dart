@@ -149,6 +149,14 @@ class _AboutPageState extends State<AboutPage> {
                     context,
                   ).textTheme.bodySmall?.copyWith(color: AppColors.mutedText),
                 ),
+                const SizedBox(height: 6),
+                TextButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://icons8.com'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: const Text('Icons by Icons8'),
+                ),
               ],
             ),
           ),
