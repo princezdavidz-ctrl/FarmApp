@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
+import '../../../../shared/components/bottom_navigation.dart';
 import '../../../../features/auth/domain/entities/session.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_providers.dart';

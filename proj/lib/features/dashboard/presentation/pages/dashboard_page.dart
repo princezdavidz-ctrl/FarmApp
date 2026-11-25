@@ -10,6 +10,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../security/authorization/permissions.dart';
 import '../../../../security/authorization/roles.dart';
+import '../../../../shared/components/bottom_navigation.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../notifications/presentation/providers/notifications_provider.dart';
 import '../../../notifications/data/notifications_api.dart';
