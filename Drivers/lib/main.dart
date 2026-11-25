@@ -44,6 +44,9 @@ class DriverController extends ChangeNotifier {
   Timer? _requestPollingTimer;
   bool _refreshingLocation = false;
   bool _refreshingRequests = false;
+  bool _appResumed = true;
+  DateTime? requestsUpdatedAt;
+  String? requestRefreshWarning;
 
   LatLng get position {
     final lat = double.tryParse(driver['latitude']?.toString() ?? '');
@@ -285,7 +288,7 @@ class DriverController extends ChangeNotifier {
       driver = {...driver, ..._map(response['driver'])};
       if (available) {
         _startLocationUpdates();
-        _startRequestPolling();
+        _syncRequestPolling();
       } else {
         _requestPollingTimer?.cancel();
         _requestPollingTimer = null;
@@ -302,12 +305,13 @@ class DriverController extends ChangeNotifier {
       transportRequests = _list(response['data']);
       final active = response['active_request'];
       activeTransportRequest = active is Map ? _map(active) : null;
-      notifyListeners();
+      requestsUpdatedAt = DateTime.now();
+      requestRefreshWarning = null;
     } catch (exception) {
-      error = exception.toString().replaceFirst('Exception: ', '');
-      notifyListeners();
+      requestRefreshWarning = exception.toString().replaceFirst('Exception: ', '');
     } finally {
       _refreshingRequests = false;
+      notifyListeners();
     }
   }
 
@@ -334,20 +338,36 @@ class DriverController extends ChangeNotifier {
     });
   }
 
-  void _startRequestPolling() {
+  void _syncRequestPolling() {
     _requestPollingTimer?.cancel();
+    _requestPollingTimer = null;
+    if (!_appResumed || page != DriverPage.home || !isAvailable || isOfflineDemo) return;
     unawaited(refreshTransportRequests());
-    if (isAvailable) {
-      _requestPollingTimer = Timer.periodic(
-        const Duration(seconds: 30),
-        (_) => unawaited(refreshTransportRequests()),
-      );
+    _requestPollingTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => unawaited(refreshTransportRequests()),
+    );
+  }
+
+  void handleLifecycleState(AppLifecycleState state) {
+    _appResumed = state == AppLifecycleState.resumed;
+    if (!_appResumed) {
+      _requestPollingTimer?.cancel();
+      _requestPollingTimer = null;
+      _locationHeartbeat?.cancel();
+      _locationHeartbeat = null;
+      unawaited(_locationSubscription?.cancel());
+      _locationSubscription = null;
+    } else if (isAvailable && page == DriverPage.home) {
+      _startLocationUpdates();
+      _syncRequestPolling();
     }
   }
 
   void _startLocationUpdates() {
     unawaited(_locationSubscription?.cancel());
     _locationHeartbeat?.cancel();
+    if (!_appResumed || !isAvailable) return;
     _locationHeartbeat = Timer.periodic(
       const Duration(minutes: 5),
       (_) => unawaited(_refreshOnlineLocation()),
@@ -535,18 +555,26 @@ class FarmAppDriverApp extends StatefulWidget {
   State<FarmAppDriverApp> createState() => _FarmAppDriverAppState();
 }
 
-class _FarmAppDriverAppState extends State<FarmAppDriverApp> {
+class _FarmAppDriverAppState extends State<FarmAppDriverApp>
+    with WidgetsBindingObserver {
   late final DriverController controller;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     controller = DriverController();
     unawaited(controller.initialize());
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    controller.handleLifecycleState(state);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     controller.dispose();
     super.dispose();
   }
