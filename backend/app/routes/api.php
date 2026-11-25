@@ -248,6 +248,7 @@ Route::prefix('v1')->group(function () {
         Route::patch('farms/{farm}/join-requests/{farmJoinRequest}', [FarmJoinRequestController::class, 'review']);
         Route::patch('farms/{farm}/subscription', [FarmSubscriptionController::class, 'update']);
         Route::get('farms/{farm}/payments', [FarmSubscriptionController::class, 'payments']);
+        Route::get('farms/{farm}/payments/{payment}', [FarmSubscriptionController::class, 'payment']);
         Route::post('farms/{farm}/subscription/payment', [MpesaPaymentController::class, 'store']);
         Route::get('farms/{farm}/animals', [HerdController::class, 'index']);
         Route::post('farms/{farm}/animals', [HerdController::class, 'store']);
