@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/crop_cycles_provider.dart';
+import '../providers/crop_plots_provider.dart';
 
 class CropCyclesPage extends ConsumerWidget {
   const CropCyclesPage({super.key});
@@ -200,6 +201,13 @@ class CropCyclesPage extends ConsumerWidget {
   Future<void> _showCropForm(BuildContext context, WidgetRef ref, String farmId) async {
     final formKey = GlobalKey<FormState>();
     final plot = TextEditingController();
+    List<Map<String, dynamic>> availablePlots = [];
+    try {
+      availablePlots = await ref.read(cropPlotsProvider(farmId).future);
+    } catch (_) {
+      // Keep the legacy manual plot-name option available if plot loading fails.
+    }
+    int? selectedPlotId;
     final crop = TextEditingController();
     final variety = TextEditingController();
     final area = TextEditingController();
@@ -221,7 +229,36 @@ class CropCyclesPage extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextFormField(controller: plot, decoration: const InputDecoration(labelText: 'Field / plot name'), validator: _required),
+                    if (availablePlots.isNotEmpty)
+                      DropdownButtonFormField<int>(
+                        value: selectedPlotId,
+                        decoration: const InputDecoration(labelText: 'Registered field / plot'),
+                        items: availablePlots.map((item) {
+                          final id = int.tryParse(item['id'].toString());
+                          return DropdownMenuItem<int>(
+                            value: id,
+                            child: Text('${item['name']} · ${item['area_acres']} acres'),
+                          );
+                        }).where((item) => item.value != null).toList(),
+                        validator: (value) => value == null ? 'Select a registered plot' : null,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedPlotId = value;
+                            final selected = availablePlots.firstWhere(
+                              (item) => int.tryParse(item['id'].toString()) == value,
+                            );
+                            if (area.text.trim().isEmpty) {
+                              area.text = selected['area_acres']?.toString() ?? '';
+                            }
+                          });
+                        },
+                      )
+                    else
+                      TextFormField(
+                        controller: plot,
+                        decoration: const InputDecoration(labelText: 'Field / plot name'),
+                        validator: _required,
+                      ),
                     TextFormField(controller: crop, decoration: const InputDecoration(labelText: 'Crop (e.g. maize, beans)'), validator: _required),
                     TextFormField(controller: variety, decoration: const InputDecoration(labelText: 'Variety (optional)')),
                     TextFormField(controller: area, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Area (acres)'), validator: (v) => double.tryParse(v ?? '') == null || double.parse(v!) <= 0 ? 'Enter a valid area' : null),
@@ -260,7 +297,8 @@ class CropCyclesPage extends ConsumerWidget {
                 setState(() => saving = true);
                 try {
                   await ref.read(cropCyclesApiProvider).create(farmId, {
-                    'plot_name': plot.text.trim(),
+                    if (selectedPlotId != null) 'crop_plot_id': selectedPlotId,
+                    if (selectedPlotId == null) 'plot_name': plot.text.trim(),
                     'crop_name': crop.text.trim(),
                     'variety': variety.text.trim().isEmpty ? null : variety.text.trim(),
                     'area_acres': double.parse(area.text),
