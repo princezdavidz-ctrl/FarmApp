@@ -43,6 +43,8 @@ class AppController extends ChangeNotifier {
   Map<String, dynamic>? activeVeterinaryRequest;
   Timer? _requestTimer;
   bool _loadingRequests = false;
+  bool _appIsResumed = true;
+  String? requestRefreshError;
   DateTime? requestsUpdatedAt;
 
   bool get isRefreshingRequests => _loadingRequests;
@@ -278,12 +280,14 @@ class AppController extends ChangeNotifier {
       final active = response['active_request'];
       activeVeterinaryRequest = active is Map ? _map(active) : null;
       requestsUpdatedAt = DateTime.now();
+      requestRefreshError = null;
       _notify();
     } catch (exception) {
-      error = exception.toString().replaceFirst('Exception: ', '');
-      _notify();
+      // Keep the last successful snapshot visible during temporary outages.
+      requestRefreshError = exception.toString().replaceFirst('Exception: ', '');
     } finally {
       _loadingRequests = false;
+      _notify();
     }
   }
 
@@ -310,13 +314,23 @@ class AppController extends ChangeNotifier {
     });
   }
 
-  void _startRequestPolling() {
+  void _syncRequestPolling() {
     _requestTimer?.cancel();
+    _requestTimer = null;
+    if (!_appIsResumed || page != AppPage.home ||
+        !hasActiveSubscription || isOfflineDemo) {
+      return;
+    }
     unawaited(refreshVeterinaryRequests());
     _requestTimer = Timer.periodic(
       const Duration(seconds: 45),
       (_) => unawaited(refreshVeterinaryRequests()),
     );
+  }
+
+  void handleLifecycleState(AppLifecycleState state) {
+    _appIsResumed = state == AppLifecycleState.resumed;
+    _syncRequestPolling();
   }
 
   Future<void> logout() async {
@@ -330,6 +344,7 @@ class AppController extends ChangeNotifier {
         isOfflineDemo = false;
         veterinarian = {};
         page = AppPage.login;
+        _syncRequestPolling();
       }
     });
   }
@@ -354,7 +369,7 @@ class AppController extends ChangeNotifier {
       case 'approved':
         if (hasActiveSubscription) {
           page = AppPage.home;
-          _startRequestPolling();
+          _syncRequestPolling();
         } else {
           plans = await api.subscriptionPlans();
           if (plans.isEmpty) {
@@ -398,6 +413,7 @@ class AppController extends ChangeNotifier {
   void _go(AppPage next) {
     error = null;
     page = next;
+    _syncRequestPolling();
     _notify();
   }
 
@@ -427,18 +443,26 @@ class FarmAppVeterinarianApp extends StatefulWidget {
   State<FarmAppVeterinarianApp> createState() => _FarmAppVeterinarianAppState();
 }
 
-class _FarmAppVeterinarianAppState extends State<FarmAppVeterinarianApp> {
+class _FarmAppVeterinarianAppState extends State<FarmAppVeterinarianApp>
+    with WidgetsBindingObserver {
   late final AppController _controller;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = AppController();
     unawaited(_controller.initialize());
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _controller.handleLifecycleState(state);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
   }
@@ -1206,6 +1230,14 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
+        if (controller.requestRefreshError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Could not refresh requests. Showing the last saved results. ' + controller.requestRefreshError!,
+              style: const TextStyle(color: Color(0xFF9A5B12), fontSize: 12),
+            ),
+          ),
         if (controller.requestsUpdatedAt != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
