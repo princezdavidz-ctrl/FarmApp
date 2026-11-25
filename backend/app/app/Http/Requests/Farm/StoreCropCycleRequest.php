@@ -14,8 +14,15 @@ class StoreCropCycleRequest extends FormRequest
 
     public function rules(): array
     {
+        $farmId = $this->route('farm')?->id;
+
         return [
-            'plot_name' => ['required', 'string', 'max:120'],
+            'crop_plot_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('crop_plots', 'id')->where('farm_id', $farmId),
+            ],
+            'plot_name' => ['required_without:crop_plot_id', 'nullable', 'string', 'max:120'],
             'crop_name' => ['required', 'string', 'max:120'],
             'variety' => ['nullable', 'string', 'max:120'],
             'area_acres' => ['required', 'numeric', 'gt:0', 'max:100000'],
