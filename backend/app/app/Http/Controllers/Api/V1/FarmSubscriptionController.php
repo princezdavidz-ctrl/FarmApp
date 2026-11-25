@@ -43,6 +43,32 @@ class FarmSubscriptionController extends Controller
         return response()->json(['data' => $payments]);
     }
 
+    public function payment(Request $request, Farm $farm, Payment $payment): JsonResponse
+    {
+        abort_unless((int) $payment->farm_id === (int) $farm->id, 404);
+
+        $user = $request->user();
+        $isOwner = $user->role === 'farmOwner'
+            && $user->farms()->where('farms.id', $farm->id)->exists();
+        $isInitiator = (int) $payment->user_id === (int) $user->id;
+
+        abort_unless($isOwner || $isInitiator, 403, 'You cannot view this payment.');
+
+        return response()->json([
+            'payment' => [
+                'id' => (string) $payment->id,
+                'plan_code' => $payment->plan_code,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency,
+                'status' => $payment->status,
+                'receipt' => $payment->mpesa_receipt,
+                'description' => $payment->result_description,
+                'created_at' => $payment->created_at,
+                'paid_at' => $payment->paid_at,
+            ],
+        ]);
+    }
+
     public function update(UpdateSubscriptionRequest $request, Farm $farm): JsonResponse
     {
         $user = $request->user();
