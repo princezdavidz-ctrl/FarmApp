@@ -47,6 +47,8 @@ import '../../features/settings/presentation/pages/farm_management_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../features/farm/presentation/pages/farm_hub_page.dart';
+import '../../features/ai/presentation/pages/ai_assistant_page.dart';
 import '../../shared/components/bottom_navigation.dart';
 import '../../shared/widgets/profile_avatar.dart';
 import '../../app/theme/app_colors.dart';
@@ -146,6 +148,14 @@ abstract final class AppRouter {
           GoRoute(
             path: AppRoutes.home,
             builder: (context, state) => const DashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.farm,
+            builder: (context, state) => const FarmHubPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.ai,
+            builder: (context, state) => const AiAssistantPage(),
           ),
           GoRoute(
             path: AppRoutes.herd,
@@ -334,29 +344,23 @@ class _NavigationShellState extends ConsumerState<NavigationShell> {
     final permissions =
         access.valueOrNull?.permissionsFor(session?.user.id ?? '') ??
         (access.isLoading ? RolePermissions.all[role] ?? const {} : const {});
-    final canViewHerd =
-        role == UserRole.farmOwner ||
-        role == UserRole.superAdmin ||
-        permissions.contains(AppPermission.manageHerd);
-    final canViewFeed =
-        role == UserRole.farmOwner ||
-        role == UserRole.superAdmin ||
-        permissions.contains(AppPermission.manageFeed);
     final bottomRoutes = [
       AppRoutes.home,
-      if (canViewHerd) AppRoutes.herd,
-      if (canViewFeed) AppRoutes.feed,
-      AppRoutes.profile,
+      AppRoutes.farm,
+      AppRoutes.ai,
     ];
-    final selectedIndex = bottomRoutes.indexOf(location);
+    final selectedIndex = location == AppRoutes.farm ||
+            location.startsWith('${AppRoutes.farm}/')
+        ? 1
+        : location == AppRoutes.ai || location.startsWith('${AppRoutes.ai}/')
+        ? 2
+        : 0;
     return Scaffold(
       key: navigationScaffoldKey,
       drawer: const _AppDrawer(),
       body: widget.child,
       bottomNavigationBar: AppBottomNavigation(
-        selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-        showHerd: canViewHerd,
-        showFeed: canViewFeed,
+        selectedIndex: selectedIndex,
         onSelected: (index) => context.go(bottomRoutes[index]),
       ),
     );
