@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../shared/components/bottom_navigation.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../features/herd/presentation/pages/herd_page.dart';
 import '../../features/crops/presentation/pages/crop_cycles_page.dart';
