@@ -142,6 +142,12 @@ class Farm extends Model
         return $this->hasMany(InventoryItem::class);
     }
 
+    /** @return HasMany<CropPlot, Farm> */
+    public function cropPlots(): HasMany
+    {
+        return $this->hasMany(CropPlot::class);
+    }
+
     /** @return HasMany<CropCycle, Farm> */
     public function cropCycles(): HasMany
     {
