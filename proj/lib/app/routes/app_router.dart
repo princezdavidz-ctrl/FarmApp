@@ -7,6 +7,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../features/herd/presentation/pages/herd_page.dart';
 import '../../features/crops/presentation/pages/crop_cycles_page.dart';
 import '../../features/crops/presentation/pages/crop_plots_page.dart';
+import '../../features/crops/presentation/pages/soil_management_page.dart';
 import '../../features/crops/presentation/pages/crop_activities_page.dart';
 import '../../features/health/presentation/pages/health_page.dart';
 import '../../features/health/presentation/pages/vaccination_page.dart';
@@ -172,6 +173,13 @@ abstract final class AppRouter {
             builder: (context, state) => const PermissionRoute(
               permission: AppPermission.manageCrops,
               child: CropPlotsPage(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.soilManagement,
+            builder: (context, state) => const PermissionRoute(
+              permission: AppPermission.manageCrops,
+              child: SoilManagementPage(),
             ),
           ),
           GoRoute(
@@ -495,6 +503,12 @@ class _AppDrawer extends ConsumerWidget {
                       icon: Icons.map_outlined,
                       title: 'Fields & plots',
                       route: AppRoutes.cropPlots,
+                    ),
+                  if (allows(AppPermission.manageCrops))
+                    _ListTile(
+                      icon: Icons.science_outlined,
+                      title: 'Soil management',
+                      route: AppRoutes.soilManagement,
                     ),
                   if (allows(AppPermission.manageCrops))
                     _ListTile(
