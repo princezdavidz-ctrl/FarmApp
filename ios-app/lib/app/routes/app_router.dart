@@ -569,6 +569,49 @@ class _AppDrawer extends ConsumerWidget {
   }
 }
 
+class _Icons8MenuIcon extends StatelessWidget {
+  const _Icons8MenuIcon({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  String get _slug {
+    if (icon == Icons.home_outlined) return 'home--v1';
+    if (icon == Icons.agriculture_outlined) return 'tractor';
+    if (icon == Icons.map_outlined) return 'map';
+    if (icon == Icons.event_note_outlined) return 'calendar';
+    if (icon == Icons.pets_outlined) return 'cow';
+    if (icon == Icons.health_and_safety_outlined) return 'health-graph';
+    if (icon == Icons.vaccines_outlined) return 'syringe';
+    if (icon == Icons.medication_outlined) return 'pills';
+    if (icon == Icons.monitor_weight_outlined) return 'weight';
+    if (icon == Icons.restaurant_outlined) return 'food';
+    if (icon == Icons.inventory_2_outlined) return 'inventory';
+    if (icon == Icons.favorite_outline) return 'heart-with-pulse';
+    if (icon == Icons.point_of_sale_outlined) return 'cash-register';
+    if (icon == Icons.account_balance_wallet_outlined) return 'wallet';
+    if (icon == Icons.assessment_outlined) return 'graph-report';
+    if (icon == Icons.notifications_outlined) return 'appointment-reminders';
+    if (icon == Icons.support_agent_outlined) return 'customer-support';
+    if (icon == Icons.manage_accounts_outlined) return 'conference';
+    if (icon == Icons.settings_outlined) return 'settings';
+    if (icon == Icons.info_outline) return 'info';
+    if (icon == Icons.logout) return 'logout-rounded';
+    return 'icons8';
+  }
+
+  @override
+  Widget build(BuildContext context) => Image.network(
+    'https://img.icons8.com/ios/50/$_slug.png',
+    width: 22,
+    height: 22,
+    color: color,
+    colorBlendMode: BlendMode.srcIn,
+    errorBuilder: (context, error, stackTrace) =>
+        Icon(icon, color: color, size: 22),
+  );
+}
+
 class _ListTile extends StatelessWidget {
   const _ListTile({
     required this.icon,
@@ -591,10 +634,9 @@ class _ListTile extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         selected: selected,
         selectedTileColor: AppColors.primaryGreen.withValues(alpha: 0.11),
-        leading: Icon(
-          icon,
+        leading: _Icons8MenuIcon(
+          icon: icon,
           color: selected ? AppColors.deepGreen : AppColors.mutedText,
-          size: 22,
         ),
         title: Text(
           title,
@@ -642,7 +684,7 @@ class _LogoutTile extends StatelessWidget {
     dense: true,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     tileColor: AppColors.danger.withValues(alpha: 0.06),
-    leading: const Icon(Icons.logout, color: AppColors.danger),
+    leading: const _Icons8MenuIcon(icon: Icons.logout, color: AppColors.danger),
     title: Text(title),
     textColor: AppColors.danger,
     onTap: onLogout,
