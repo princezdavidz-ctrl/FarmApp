@@ -6,6 +6,7 @@ abstract final class AppRoutes {
   static const crops = '/crops';
   static const cropPlots = '/crops/plots';
   static const cropActivities = '/crops/activities';
+  static const soilManagement = '/crops/soil';
   static const health = '/health';
   static const vaccination = '/health/vaccination';
   static const medication = '/health/medication';
