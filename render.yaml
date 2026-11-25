@@ -4,7 +4,7 @@ services:
     runtime: docker
     region: frankfurt
     plan: free
-    branch: infra/render-neon-backend
+    branch: main
     dockerfilePath: ./backend/app/Dockerfile
     dockerContext: ./backend/app
     healthCheckPath: /up
@@ -19,7 +19,7 @@ services:
       - key: APP_KEY
         sync: false
       - key: APP_URL
-        value: https://farmapp-api.onrender.com
+        sync: false
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_URL
