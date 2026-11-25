@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/crop_plots_provider.dart';
+import 'soil_tests_page.dart';
 
 class CropPlotsPage extends ConsumerWidget {
   const CropPlotsPage({super.key});
@@ -106,6 +107,11 @@ class CropPlotsPage extends ConsumerWidget {
                           ),
                           subtitle: Text(_details(plot)),
                           isThreeLine: true,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => SoilTestsPage(farmId: farmId, plot: plot),
+                            ),
+                          ),
                           trailing: PopupMenuButton<String>(
                             onSelected: (action) {
                               if (action == 'edit') {
