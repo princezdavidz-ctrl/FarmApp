@@ -6,7 +6,10 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --opti
 
 FROM php:8.4-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor libzip libpq     && apk add --no-cache --virtual .build-deps libzip-dev oniguruma-dev postgresql-dev libxml2-dev     && docker-php-ext-install pdo_mysql pdo_pgsql bcmath mbstring xml opcache zip     && apk del .build-deps
+RUN apk add --no-cache nginx supervisor libzip libpq \
+    && apk add --no-cache --virtual .build-deps libzip-dev oniguruma-dev postgresql-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql pdo_pgsql bcmath mbstring xml opcache zip \
+    && apk del .build-deps
 
 WORKDIR /var/www/html
 
@@ -17,9 +20,10 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 
 RUN rm -f bootstrap/cache/*.php \
-    && mkdir -p /run/nginx \
+    && mkdir -p /run/nginx /tmp/client_temp /tmp/fastcgi_temp \
+    && nginx -t \
     && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 10000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]
