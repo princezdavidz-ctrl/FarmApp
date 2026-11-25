@@ -148,6 +148,12 @@ class Farm extends Model
         return $this->hasMany(CropPlot::class);
     }
 
+    /** @return HasManyThrough<SoilTest, CropPlot> */
+    public function soilTests(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(SoilTest::class, CropPlot::class);
+    }
+
     /** @return HasMany<CropCycle, Farm> */
     public function cropCycles(): HasMany
     {
