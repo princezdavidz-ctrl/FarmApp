@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: farmapp-api
+    runtime: docker
+    region: frankfurt
+    plan: free
+    branch: infra/render-neon-backend
+    dockerfilePath: ./backend/app/Dockerfile
+    dockerContext: ./backend/app
+    healthCheckPath: /up
+    autoDeploy: false
+    envVars:
+      - key: APP_NAME
+        value: FarmApp
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        value: https://farmapp-api.onrender.com
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: LOG_LEVEL
+        value: info
+      - key: CACHE_STORE
+        value: file
+      - key: SESSION_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
