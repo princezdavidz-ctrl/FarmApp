@@ -615,6 +615,19 @@ class _FarmAppDriverAppState extends State<FarmAppDriverApp>
               child: Center(child: CircularProgressIndicator()),
             ),
           ),
+        if (controller.requestRefreshWarning != null && controller.page == DriverPage.home)
+          Positioned(
+            left: 16, right: 16, top: 12,
+            child: Material(
+              color: const Color(0xFFFFE8C2),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text('Transport requests may be outdated: ' + controller.requestRefreshWarning!,
+                  style: const TextStyle(color: Color(0xFF744500))),
+              ),
+            ),
+          ),
         if (controller.error case final message?)
           Positioned(
             left: 16,
