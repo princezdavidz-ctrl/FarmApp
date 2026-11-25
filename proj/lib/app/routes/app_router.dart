@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../features/herd/presentation/pages/herd_page.dart';
 import '../../features/crops/presentation/pages/crop_cycles_page.dart';
+import '../../features/crops/presentation/pages/crop_plots_page.dart';
 import '../../features/crops/presentation/pages/crop_activities_page.dart';
 import '../../features/health/presentation/pages/health_page.dart';
 import '../../features/health/presentation/pages/vaccination_page.dart';
@@ -164,6 +165,13 @@ abstract final class AppRouter {
             builder: (context, state) => const PermissionRoute(
               permission: AppPermission.manageCrops,
               child: CropCyclesPage(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.cropPlots,
+            builder: (context, state) => const PermissionRoute(
+              permission: AppPermission.manageCrops,
+              child: CropPlotsPage(),
             ),
           ),
           GoRoute(
@@ -481,6 +489,12 @@ class _AppDrawer extends ConsumerWidget {
                       icon: Icons.agriculture_outlined,
                       title: 'Crop farming',
                       route: AppRoutes.crops,
+                    ),
+                  if (allows(AppPermission.manageCrops))
+                    _ListTile(
+                      icon: Icons.map_outlined,
+                      title: 'Fields & plots',
+                      route: AppRoutes.cropPlots,
                     ),
                   if (allows(AppPermission.manageCrops))
                     _ListTile(
