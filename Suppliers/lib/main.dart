@@ -50,6 +50,10 @@ class AppController extends ChangeNotifier {
   bool busy = false;
   bool isOfflineDemo = false;
   String? error;
+  Timer? _transportPollingTimer;
+  bool _refreshingTransportRequests = false;
+  bool _disposed = false;
+  DateTime? transportRequestsUpdatedAt;
 
   Future<void> initialize() async {
     final token = await _storage.read(key: _tokenKey);
@@ -302,13 +306,45 @@ class AppController extends ChangeNotifier {
     await _run(() async {
       await api.createTransportRequest(data);
       transportRequests = await api.transportRequests();
+      transportRequestsUpdatedAt = DateTime.now();
     });
   }
 
   Future<void> refreshTransportRequests() async {
     await _run(() async {
       transportRequests = await api.transportRequests();
+      transportRequestsUpdatedAt = DateTime.now();
     });
+  }
+
+  void _startTransportPolling() {
+    _transportPollingTimer?.cancel();
+    unawaited(_pollTransportRequests());
+    _transportPollingTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => unawaited(_pollTransportRequests()),
+    );
+  }
+
+  Future<void> _pollTransportRequests() async {
+    if (_disposed ||
+        isOfflineDemo ||
+        busy ||
+        _refreshingTransportRequests ||
+        page != AppPage.home ||
+        !hasActiveSubscription) {
+      return;
+    }
+    _refreshingTransportRequests = true;
+    try {
+      transportRequests = await api.transportRequests();
+      transportRequestsUpdatedAt = DateTime.now();
+    } catch (_) {
+      // Keep the last successful snapshot visible during temporary outages.
+    } finally {
+      _refreshingTransportRequests = false;
+      if (!_disposed) _notify();
+    }
   }
 
   Future<void> cancelTransportRequest(Map<String, dynamic> request) async {
@@ -321,10 +357,12 @@ class AppController extends ChangeNotifier {
       }
       await api.updateTransportRequestStatus(id, 'cancelled');
       transportRequests = await api.transportRequests();
+      transportRequestsUpdatedAt = DateTime.now();
     });
   }
 
   Future<void> logout() async {
+    _transportPollingTimer?.cancel();
     await _run(() async {
       try {
         if (!isOfflineDemo) await api.logout();
@@ -360,7 +398,9 @@ class AppController extends ChangeNotifier {
         if (hasActiveSubscription) {
           products = await api.products();
           transportRequests = await api.transportRequests();
+          transportRequestsUpdatedAt = DateTime.now();
           page = AppPage.home;
+          _startTransportPolling();
         } else {
           plans = await api.subscriptionPlans();
           if (plans.isEmpty) {
@@ -413,6 +453,13 @@ class AppController extends ChangeNotifier {
   }
 
   void _notify() => notifyListeners();
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _transportPollingTimer?.cancel();
+    super.dispose();
+  }
 
   static Map<String, dynamic> _map(dynamic value) {
     if (value is! Map) return <String, dynamic>{};
@@ -1205,6 +1252,14 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
+          if (controller.transportRequestsUpdatedAt != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Updated ${TimeOfDay.fromDateTime(controller.transportRequestsUpdatedAt!).format(context)} · refreshes automatically',
+                style: const TextStyle(color: _muted, fontSize: 12),
+              ),
+            ),
           ...controller.transportRequests.map(
             (request) => ListTile(
               leading: const Icon(Icons.local_shipping_outlined),
