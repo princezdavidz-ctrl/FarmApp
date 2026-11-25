@@ -2,7 +2,7 @@ name: FarmApp CI
 
 on:
   push:
-    branches: [main, "chore/**", "fix/**", "feature/**", "feat/**"]
+    branches: [main, "chore/**", "fix/**", "feature/**", "feat/**", "test/**"]
   pull_request:
     branches: [main]
 
@@ -58,6 +58,53 @@ jobs:
       - name: Run feature and unit tests
         working-directory: backend/app
         run: php artisan test
+
+  backend-postgres-migrations:
+    name: PostgreSQL 17 migration compatibility
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: farmapp_test
+          POSTGRES_USER: farmapp
+          POSTGRES_PASSWORD: farmapp_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U farmapp -d farmapp_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: farmapp_test
+      DB_USERNAME: farmapp
+      DB_PASSWORD: farmapp_ci_password
+      DB_SSLMODE: disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, pdo_pgsql, pgsql, xml, curl, fileinfo
+          coverage: none
+      - name: Install Composer dependencies
+        working-directory: backend/app
+        run: composer install --no-interaction --prefer-dist
+      - name: Configure application key
+        working-directory: backend/app
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Run all migrations on PostgreSQL
+        working-directory: backend/app
+        run: php artisan migrate --force --no-interaction
+      - name: Confirm migration state
+        working-directory: backend/app
+        run: php artisan migrate:status
 
   crm:
     name: CRM production build
