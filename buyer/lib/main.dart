@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -262,6 +264,9 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   MarketplaceFilters _filters = const MarketplaceFilters();
   final _searchFocusNode = FocusNode();
   int _page = 0;
+  Timer? _deliveryPollingTimer;
+  bool _refreshingDeliveries = false;
+  DateTime? _deliveriesUpdatedAt;
 
   @override
   void initState() {
@@ -272,6 +277,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
 
   @override
   void dispose() {
+    _stopDeliveryPolling();
     _searchFocusNode.dispose();
     super.dispose();
   }
@@ -284,10 +290,52 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   }
 
   void _openNotifications() {
-    setState(() {
-      _page = 1;
-      _deliveriesFuture = widget.api.fetchBuyerDeliveries();
-    });
+    _selectPage(1);
+  }
+
+  void _selectPage(int page) {
+    if (_page == page) return;
+    setState(() => _page = page);
+    if (page == 1) {
+      _startDeliveryPolling();
+      unawaited(_refreshDeliveries(showError: false));
+    } else {
+      _stopDeliveryPolling();
+    }
+  }
+
+  void _startDeliveryPolling() {
+    _deliveryPollingTimer?.cancel();
+    _deliveryPollingTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => unawaited(_refreshDeliveries(showError: false)),
+    );
+  }
+
+  void _stopDeliveryPolling() {
+    _deliveryPollingTimer?.cancel();
+    _deliveryPollingTimer = null;
+  }
+
+  Future<void> _refreshDeliveries({bool showError = true}) async {
+    if (!mounted || _page != 1 || _refreshingDeliveries) return;
+    _refreshingDeliveries = true;
+    try {
+      final deliveries = await widget.api.fetchBuyerDeliveries();
+      if (!mounted) return;
+      setState(() {
+        _deliveriesFuture = Future.value(deliveries);
+        _deliveriesUpdatedAt = DateTime.now();
+      });
+    } catch (error) {
+      if (showError && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$error')),
+        );
+      }
+    } finally {
+      _refreshingDeliveries = false;
+    }
   }
 
   Future<void> _refresh() async {
@@ -343,7 +391,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
       },
       bottomNavigationBar: NavigationBar(
         selectedIndex: _page,
-        onDestinationSelected: (value) => setState(() => _page = value),
+        onDestinationSelected: _selectPage,
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),
@@ -1096,19 +1144,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   }
 
   Widget _deliveries() => RefreshIndicator(
-    onRefresh: () async {
-      final future = widget.api.fetchBuyerDeliveries();
-      setState(() => _deliveriesFuture = future);
-      try {
-        await future;
-      } catch (error) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('$error')));
-        }
-      }
-    },
+    onRefresh: () => _refreshDeliveries(),
     child: FutureBuilder<List<BuyerDelivery>>(
       future: _deliveriesFuture,
       builder: (context, snapshot) {
@@ -1145,11 +1181,24 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
         return ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
-          itemCount: deliveries.length,
-          itemBuilder: (context, index) => _DeliveryCard(
-            delivery: deliveries[index],
-            language: widget.language,
-          ),
+          itemCount: deliveries.length + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  _deliveriesUpdatedAt == null
+                      ? 'Pull down to refresh delivery updates.'
+                      : 'Updated ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(_deliveriesUpdatedAt!.toLocal()))} · checking automatically',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              );
+            }
+            return _DeliveryCard(
+              delivery: deliveries[index - 1],
+              language: widget.language,
+            );
+          },
         );
       },
     ),
