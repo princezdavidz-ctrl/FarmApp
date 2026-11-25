@@ -60,6 +60,7 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
   Timer? _pollTimer;
   String _status = 'pending';
   String? _description;
+  String? _receipt;
   bool _isRefreshing = false;
   bool _pollingExpired = false;
   int _pollCount = 0;
@@ -111,6 +112,7 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
           _status = nextStatus;
         }
         _description = payment['description']?.toString() ?? _description;
+        _receipt = payment['receipt']?.toString() ?? _receipt;
         _pollingExpired = false;
       });
       if (_status != 'pending') _pollTimer?.cancel();
@@ -241,9 +243,9 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
-                      if (_status == 'paid' && paymentReceiptAvailable) ...[
+                      if (_status == 'paid' && (_receipt?.isNotEmpty ?? false)) ...[
                         const SizedBox(height: 12),
-                        Text('Receipt: ${_description ?? ''}'),
+                        Text('M-Pesa receipt: ${_receipt!}'),
                       ],
                       if (widget.merchantRequestId.isNotEmpty ||
                           widget.checkoutRequestId.isNotEmpty) ...[
@@ -298,5 +300,4 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
     );
   }
 
-  bool get paymentReceiptAvailable => false;
 }
