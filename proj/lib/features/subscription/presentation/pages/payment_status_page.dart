@@ -141,7 +141,7 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
     final heading = switch (normalizedMethod) {
       'Airtel Money' => 'Airtel Money payment',
       'Bank transfer' => 'Bank transfer',
-      _ => 'M-Pesa payment',
+      _ => _status == 'pending' ? 'M-Pesa payment requested' : 'M-Pesa payment',
     };
     final message = _description ??
         'Check your phone and enter your PIN to confirm the payment.';
@@ -232,8 +232,17 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
                       if (_status == 'pending') ...[
                         const SizedBox(height: 16),
                         Text(
-                          'Keep this screen open while FarmApp checks the payment confirmation. Do not pay again while this request is pending.',
+                          switch (normalizedMethod) {
+                            'Airtel Money' => 'Open your Airtel Money wallet and approve the payment request to complete the transaction.',
+                            'Bank transfer' => 'Use your banking app or branch transfer to complete the payment for this subscription.',
+                            _ => 'Check your phone for the M-Pesa prompt and enter your PIN to complete the transaction.',
+                          },
                           style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Keep this screen open while FarmApp checks the payment confirmation. Do not pay again while this request is pending.',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                       if (_pollingExpired && _status == 'pending') ...[
