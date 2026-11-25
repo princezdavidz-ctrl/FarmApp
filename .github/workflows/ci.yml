@@ -2,7 +2,7 @@ name: FarmApp CI
 
 on:
   push:
-    branches: [main, "chore/**", "fix/**", "feature/**", "feat/**"]
+    branches: [main, "chore/**", "fix/**", "feature/**", "feat/**", "ci/**"]
   pull_request:
     branches: [main]
 
@@ -38,7 +38,7 @@ jobs:
         run: flutter test --no-pub
 
   backend:
-    name: Laravel backend tests
+    name: Laravel backend tests (SQLite)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +58,50 @@ jobs:
       - name: Run feature and unit tests
         working-directory: backend/app
         run: php artisan test
+
+  postgres-migrations:
+    name: PostgreSQL 17 migration compatibility
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: farmapp_test
+          POSTGRES_USER: farmapp_test
+          POSTGRES_PASSWORD: farmapp_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U farmapp_test -d farmapp_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, pdo_pgsql, pgsql, xml, curl, fileinfo
+          coverage: none
+      - name: Install Composer dependencies
+        working-directory: backend/app
+        run: composer install --no-interaction --prefer-dist
+      - name: Configure Laravel environment
+        working-directory: backend/app
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Run all migrations against PostgreSQL 17
+        working-directory: backend/app
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: farmapp_test
+          DB_USERNAME: farmapp_test
+          DB_PASSWORD: farmapp_test_password
+        run: php artisan migrate:fresh --force
 
   crm:
     name: CRM production build
