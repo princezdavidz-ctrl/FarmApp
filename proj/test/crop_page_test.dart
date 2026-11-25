@@ -13,10 +13,27 @@ void main() {
     expect(find.text('Crop farming'), findsOneWidget);
     expect(find.text('Fields & plots'), findsOneWidget);
     expect(find.text('Crop cycles'), findsOneWidget);
-    expect(find.text('Irrigation'), findsOneWidget);
-    expect(find.text('Inputs & soil'), findsOneWidget);
-    expect(find.text('Pests & diseases'), findsOneWidget);
-    expect(find.text('Harvests'), findsOneWidget);
+
+    final scrollable = find.byType(Scrollable).first;
+    for (final label in [
+      'Irrigation',
+      'Inputs & soil',
+      'Pests & diseases',
+      'Harvests',
+    ]) {
+      await tester.scrollUntilVisible(
+        find.text(label),
+        300,
+        scrollable: scrollable,
+      );
+      expect(find.text(label), findsOneWidget);
+    }
+
+    await tester.scrollUntilVisible(
+      find.textContaining('No sample figures'),
+      300,
+      scrollable: scrollable,
+    );
     expect(find.textContaining('No sample figures'), findsOneWidget);
   });
 }
