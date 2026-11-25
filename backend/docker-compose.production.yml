@@ -1,0 +1,49 @@
+services:
+  queue-worker:
+    build: ./app
+    restart: unless-stopped
+    env_file: ./app/.env
+    environment:
+      DB_HOST: mysql
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    volumes:
+      - backend_storage:/var/www/html/storage
+    command:
+      - php
+      - artisan
+      - queue:work
+      - --sleep=3
+      - --tries=3
+      - --timeout=90
+      - --max-time=3600
+    stop_grace_period: 2m
+
+  scheduler:
+    build: ./app
+    restart: unless-stopped
+    env_file: ./app/.env
+    environment:
+      DB_HOST: mysql
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    volumes:
+      - backend_storage:/var/www/html/storage
+    command:
+      - php
+      - artisan
+      - schedule:work
+    stop_grace_period: 30s
+
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/production.conf:/etc/nginx/conf.d/production.conf:ro
