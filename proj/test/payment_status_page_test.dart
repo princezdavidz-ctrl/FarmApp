@@ -13,6 +13,8 @@ void main() {
             currency: 'KES',
             merchantRequestId: 'merchant-1',
             checkoutRequestId: 'checkout-1',
+            farmId: '',
+            paymentId: '',
           ),
         ),
       ),
