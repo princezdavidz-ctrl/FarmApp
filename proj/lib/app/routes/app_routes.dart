@@ -4,6 +4,7 @@ abstract final class AppRoutes {
   static const home = '/';
   static const herd = '/herd';
   static const crops = '/crops';
+  static const cropPlots = '/crops/plots';
   static const cropActivities = '/crops/activities';
   static const health = '/health';
   static const vaccination = '/health/vaccination';
