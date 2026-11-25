@@ -2,7 +2,7 @@ name: FarmApp CI
 
 on:
   push:
-    branches: [main, "chore/**", "fix/**", "feature/**"]
+    branches: [main, "chore/**", "fix/**", "feature/**", "feat/**"]
   pull_request:
     branches: [main]
 
