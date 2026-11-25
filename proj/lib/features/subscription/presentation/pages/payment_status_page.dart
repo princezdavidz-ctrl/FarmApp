@@ -71,7 +71,6 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
     _description = widget.resultDescription;
     if (widget.farmId.isNotEmpty && widget.paymentId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _refreshStatus();
         _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
           if (!mounted || _status != 'pending') return;
           if (_pollCount >= 36) {
@@ -82,6 +81,7 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
           _pollCount++;
           _refreshStatus();
         });
+        _refreshStatus();
       });
     }
   }
@@ -129,7 +129,7 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
     _ => 'Awaiting confirmation',
   };
 
-  Color _statusColor(BuildContext context) => switch (_status) {
+  Color get _statusColor => switch (_status) {
     'paid' => AppColors.success,
     'failed' => AppColors.danger,
     _ => AppColors.warning,
@@ -145,7 +145,7 @@ class _PaymentStatusPageState extends ConsumerState<PaymentStatusPage> {
     };
     final message = _description ??
         'Check your phone and enter your PIN to confirm the payment.';
-    final statusColor = _statusColor(context);
+    final statusColor = _statusColor;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Payment status')),
