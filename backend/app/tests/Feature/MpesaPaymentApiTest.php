@@ -390,4 +390,76 @@ class MpesaPaymentApiTest extends TestCase
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'pending']);
         $this->assertDatabaseHas('farms', ['id' => $farm->id, 'subscription_plan' => null]);
     }
+
+
+    public function test_payment_initiator_can_read_only_their_own_payment_status(): void
+    {
+        $owner = User::factory()->create(['role' => 'farmOwner']);
+        $initiator = User::factory()->create(['role' => 'farmMember']);
+        $otherMember = User::factory()->create(['role' => 'farmMember']);
+        $farm = Farm::create(['name' => 'Payment Status Farm', 'mother_pig_count' => 5]);
+        $owner->farms()->attach($farm);
+        $initiator->farms()->attach($farm);
+        $otherMember->farms()->attach($farm);
+        $payment = Payment::create([
+            'farm_id' => $farm->id, 'user_id' => $initiator->id, 'plan_code' => 'starter',
+            'mother_pig_count' => 5, 'amount' => 500, 'currency' => 'KES',
+            'phone' => '254712345678', 'status' => 'pending',
+            'checkout_request_id' => 'private-checkout-id',
+            'result_description' => 'Prompt sent.',
+        ]);
+
+        $this->actingAs($initiator, 'sanctum')
+            ->getJson("/api/v1/farms/{$farm->id}/payments/{$payment->id}")
+            ->assertOk()
+            ->assertJsonPath('payment.id', (string) $payment->id)
+            ->assertJsonPath('payment.status', 'pending')
+            ->assertJsonPath('payment.amount', '500.00')
+            ->assertJsonMissingPath('payment.phone')
+            ->assertJsonMissingPath('payment.checkout_request_id');
+
+        $this->actingAs($otherMember, 'sanctum')
+            ->getJson("/api/v1/farms/{$farm->id}/payments/{$payment->id}")
+            ->assertForbidden();
+    }
+
+    public function test_farm_owner_can_read_payment_status_for_a_farm_member(): void
+    {
+        $owner = User::factory()->create(['role' => 'farmOwner']);
+        $initiator = User::factory()->create(['role' => 'farmMember']);
+        $farm = Farm::create(['name' => 'Owner Payment Status Farm']);
+        $owner->farms()->attach($farm);
+        $initiator->farms()->attach($farm);
+        $payment = Payment::create([
+            'farm_id' => $farm->id, 'user_id' => $initiator->id, 'plan_code' => 'starter',
+            'mother_pig_count' => 5, 'amount' => 500, 'currency' => 'KES',
+            'phone' => '254712345678', 'status' => 'paid',
+            'mpesa_receipt' => 'ABC123', 'paid_at' => now(),
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/v1/farms/{$farm->id}/payments/{$payment->id}")
+            ->assertOk()
+            ->assertJsonPath('payment.status', 'paid')
+            ->assertJsonPath('payment.receipt', 'ABC123');
+    }
+
+    public function test_payment_status_cannot_be_read_through_another_farm_route(): void
+    {
+        $owner = User::factory()->create(['role' => 'farmOwner']);
+        $farm = Farm::create(['name' => 'Original Payment Farm']);
+        $otherFarm = Farm::create(['name' => 'Other Payment Farm']);
+        $owner->farms()->attach($farm);
+        $owner->farms()->attach($otherFarm);
+        $payment = Payment::create([
+            'farm_id' => $farm->id, 'user_id' => $owner->id, 'plan_code' => 'starter',
+            'mother_pig_count' => 5, 'amount' => 500, 'currency' => 'KES',
+            'phone' => '254712345678', 'status' => 'pending',
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/v1/farms/{$otherFarm->id}/payments/{$payment->id}")
+            ->assertNotFound();
+    }
+
 }
