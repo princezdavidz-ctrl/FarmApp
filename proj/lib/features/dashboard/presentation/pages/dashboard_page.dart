@@ -174,10 +174,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: l10n.openNotifications,
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => context.go(AppRoutes.notifications),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: CircleAvatar(
+              radius: 19,
+              backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.12),
+              child: IconButton(
+                tooltip: 'Profile',
+                icon: const Icon(Icons.person_outline, size: 21),
+                color: AppColors.deepGreen,
+                onPressed: () => context.go(AppRoutes.profile),
+              ),
+            ),
           ),
         ],
       ),
