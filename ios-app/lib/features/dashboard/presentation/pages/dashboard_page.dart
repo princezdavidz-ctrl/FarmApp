@@ -160,10 +160,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ),
         title: Text(farmName, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
-          _NotificationAction(
-            unreadCount: unreadNotificationCount,
-            tooltip: l10n.openNotifications,
-            onPressed: () => context.go(AppRoutes.notifications),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: CircleAvatar(
+              radius: 19,
+              backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.12),
+              child: IconButton(
+                tooltip: 'Profile',
+                icon: const Icon(Icons.person_outline, size: 21),
+                color: AppColors.deepGreen,
+                onPressed: () => context.go(AppRoutes.profile),
+              ),
+            ),
           ),
         ],
       ),
