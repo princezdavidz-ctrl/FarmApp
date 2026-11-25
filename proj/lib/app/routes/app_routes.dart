@@ -2,6 +2,8 @@ library;
 
 abstract final class AppRoutes {
   static const home = '/';
+  static const farm = '/farm';
+  static const ai = '/ai';
   static const herd = '/herd';
   static const crops = '/crops';
   static const cropPlots = '/crops/plots';
