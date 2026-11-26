@@ -113,9 +113,17 @@ class DriverApi {
 
   Future<Map<String, dynamic>> updateTransportRequestStatus(
     String id,
-    String status,
-  ) => _request(
-    () => _dio.post('/transport-requests/$id/status', data: {'status': status}),
+    String status, {
+    String? deliveryConfirmation,
+  }) => _request(
+    () => _dio.post(
+      '/transport-requests/$id/status',
+      data: {
+        'status': status,
+        if (deliveryConfirmation != null)
+          'delivery_confirmation': deliveryConfirmation,
+      },
+    ),
   );
 
   Future<void> logout() async {

@@ -1592,6 +1592,9 @@ class BuyerDelivery {
     this.destinationAddress,
     this.driverLatitude,
     this.driverLongitude,
+    this.arrivedAt,
+    this.completedAt,
+    this.deliveryConfirmation,
   });
 
   final String id;
@@ -1617,6 +1620,9 @@ class BuyerDelivery {
   final String? destinationAddress;
   final double? driverLatitude;
   final double? driverLongitude;
+  final DateTime? arrivedAt;
+  final DateTime? completedAt;
+  final String? deliveryConfirmation;
 
   bool get hasTransport => transportStatus != null;
 
@@ -1648,6 +1654,9 @@ class BuyerDelivery {
       destinationAddress: transport?['destination_address'] as String?,
       driverLatitude: (transport?['driver_latitude'] as num?)?.toDouble(),
       driverLongitude: (transport?['driver_longitude'] as num?)?.toDouble(),
+      arrivedAt: DateTime.tryParse('${transport?['arrived_at'] ?? ''}'),
+      completedAt: DateTime.tryParse('${transport?['completed_at'] ?? ''}'),
+      deliveryConfirmation: transport?['delivery_confirmation'] as String?,
     );
   }
 }
@@ -2598,6 +2607,7 @@ class _DeliveryCard extends StatelessWidget {
                         'open' => 'Finding a driver',
                         'accepted' => 'Driver assigned',
                         'in_transit' => 'In transit',
+                        'arrived' => 'Arrived at destination',
                         'completed' => 'Delivered',
                         'cancelled' => 'Transport cancelled',
                         _ => delivery.transportStatus,
@@ -2615,6 +2625,12 @@ class _DeliveryCard extends StatelessWidget {
                 Text('Pickup: ${delivery.pickupAddress}'),
               if (delivery.destinationAddress?.isNotEmpty == true)
                 Text('Destination: ${delivery.destinationAddress}'),
+              if (delivery.arrivedAt != null)
+                Text('Arrived: ${MaterialLocalizations.of(context).formatMediumDate(delivery.arrivedAt!.toLocal())}'),
+              if (delivery.completedAt != null)
+                Text('Delivered: ${MaterialLocalizations.of(context).formatMediumDate(delivery.completedAt!.toLocal())}'),
+              if (delivery.deliveryConfirmation?.isNotEmpty == true)
+                Text('Delivery confirmation: ${delivery.deliveryConfirmation}'),
               if (delivery.driverLatitude != null &&
                   delivery.driverLongitude != null)
                 Text(
