@@ -164,21 +164,44 @@ class TransportRequestController extends Controller
     public function updateStatus(Request $request, TransportRequest $transportRequest): JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['cancelled', 'in_transit', 'completed'])],
+            'status' => ['required', Rule::in(['cancelled', 'in_transit', 'arrived', 'completed'])],
         ]);
+        if ($data['status'] === 'completed') {
+            $data += $request->validate([
+                'delivery_confirmation' => ['required', 'string', 'min:3', 'max:1000'],
+            ]);
+        }
+
         $user = $request->user();
         if ($data['status'] === 'cancelled') {
             abort_unless($transportRequest->requester_user_id === $user->id, 404);
             abort_unless($transportRequest->status === 'open', 409, 'Only open requests can be cancelled.');
+            $updates = ['status' => 'cancelled'];
         } else {
             $driver = $user->driverProfile()->firstOrFail();
+            abort_unless($transportRequest->driver_profile_id === $driver->id, 404);
+            $allowedPreviousStatuses = match ($data['status']) {
+                'in_transit' => ['accepted'],
+                'arrived' => ['in_transit'],
+                'completed' => ['arrived'],
+                default => [],
+            };
             abort_unless(
-                $transportRequest->driver_profile_id === $driver->id
-                    && in_array($transportRequest->status, ['accepted', 'in_transit'], true),
-                404,
+                in_array($transportRequest->status, $allowedPreviousStatuses, true),
+                409,
+                'The delivery must follow accepted, in transit, arrived, then completed.',
             );
+
+            $updates = ['status' => $data['status']];
+            if ($data['status'] === 'arrived') {
+                $updates['arrived_at'] = now();
+            }
+            if ($data['status'] === 'completed') {
+                $updates['completed_at'] = now();
+                $updates['delivery_confirmation'] = $data['delivery_confirmation'];
+            }
         }
-        $transportRequest->update(['status' => $data['status']]);
+        $transportRequest->update($updates);
 
         return response()->json(['data' => $this->requestData($transportRequest->fresh())]);
     }
@@ -262,6 +285,9 @@ class TransportRequestController extends Controller
             'radius_km' => $transportRequest->radius_km,
             'distance_km' => $distance === null ? null : round($distance, 1),
             'status' => $transportRequest->status,
+            'arrived_at' => $transportRequest->arrived_at?->toIso8601String(),
+            'completed_at' => $transportRequest->completed_at?->toIso8601String(),
+            'delivery_confirmation' => $transportRequest->delivery_confirmation,
             'pig_inquiry_id' => $transportRequest->pig_inquiry_id === null ? null : (string) $transportRequest->pig_inquiry_id,
             'driver_latitude' => in_array($transportRequest->status, ['accepted', 'in_transit'], true)
                 && $transportRequest->driver?->location_updated_at?->greaterThanOrEqualTo(now()->subMinutes(5))
