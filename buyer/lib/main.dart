@@ -2585,6 +2585,42 @@ class _DeliveryCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text('${delivery.farmName} · ${delivery.quantity} pigs'),
+            if (delivery.hasTransport) ...[
+              const SizedBox(height: 12),
+              const Divider(),
+              Row(
+                children: [
+                  const Icon(Icons.local_shipping_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Transport: ${switch (delivery.transportStatus) {
+                        'open' => 'Finding a driver',
+                        'accepted' => 'Driver assigned',
+                        'in_transit' => 'In transit',
+                        'completed' => 'Delivered',
+                        'cancelled' => 'Transport cancelled',
+                        _ => delivery.transportStatus,
+                      }}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+              if (delivery.driverName?.isNotEmpty == true)
+                Text('Driver: ${delivery.driverName}'),
+              if (delivery.driverPhone?.isNotEmpty == true)
+                Text('Driver contact: ${delivery.driverPhone}'),
+              if (delivery.pickupAddress?.isNotEmpty == true)
+                Text('Pickup: ${delivery.pickupAddress}'),
+              if (delivery.destinationAddress?.isNotEmpty == true)
+                Text('Destination: ${delivery.destinationAddress}'),
+              if (delivery.driverLatitude != null &&
+                  delivery.driverLongitude != null)
+                Text(
+                  'Latest driver location: ${delivery.driverLatitude!.toStringAsFixed(5)}, ${delivery.driverLongitude!.toStringAsFixed(5)}',
+                ),
+            ],
             if (delivery.breed != null) Text(delivery.breed!),
             if (delivery.ageWeeks != null)
               Text(
