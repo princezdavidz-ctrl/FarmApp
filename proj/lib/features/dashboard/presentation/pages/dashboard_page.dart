@@ -813,13 +813,13 @@ class _QuickAction extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radius),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.12)),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
+              color: color.withValues(alpha: 0.045),
+              blurRadius: 18,
+              offset: const Offset(0, 7),
             ),
           ],
         ),
@@ -827,16 +827,19 @@ class _QuickAction extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              child: Icon(icon, color: AppColors.inverseText, size: 20),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color, size: 26),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 9),
             Text(
               label,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
           ],
