@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TransportRequest extends Model
 {
     protected $fillable = [
-        'requester_user_id', 'farm_id', 'supplier_profile_id', 'driver_profile_id',
+        'requester_user_id', 'farm_id', 'supplier_profile_id', 'driver_profile_id', 'pig_inquiry_id',
         'service_type', 'vehicle_type', 'pickup_latitude', 'pickup_longitude',
         'pickup_address', 'destination_latitude', 'destination_longitude',
         'destination_address', 'load_description', 'radius_km', 'status',
@@ -35,5 +35,11 @@ class TransportRequest extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(DriverProfile::class, 'driver_profile_id');
+    }
+
+    /** @return BelongsTo<PigInquiry, TransportRequest> */
+    public function pigInquiry(): BelongsTo
+    {
+        return $this->belongsTo(PigInquiry::class);
     }
 }
