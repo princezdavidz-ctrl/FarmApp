@@ -337,13 +337,26 @@ class DriverController extends ChangeNotifier {
     });
   }
 
-  Future<void> completeTransportRequest() async {
+  Future<void> arriveAtDelivery() async {
     final request = activeTransportRequest;
     if (request == null || request['status'] != 'in_transit') return;
+    await _run(() async {
+      final response = await api.updateTransportRequestStatus(
+        request['id'].toString(),
+        'arrived',
+      );
+      activeTransportRequest = _map(response['data']);
+    });
+  }
+
+  Future<void> completeTransportRequest(String confirmation) async {
+    final request = activeTransportRequest;
+    if (request == null || request['status'] != 'arrived') return;
     await _run(() async {
       await api.updateTransportRequestStatus(
         request['id'].toString(),
         'completed',
+        deliveryConfirmation: confirmation,
       );
       activeTransportRequest = null;
       await refreshTransportRequests();
@@ -1225,7 +1238,42 @@ class _HomePageState extends State<HomePage> {
                         request: active,
                         active: true,
                         onStart: controller.startTransportRequest,
-                        onComplete: controller.completeTransportRequest,
+                        onArrive: controller.arriveAtDelivery,
+                        onComplete: () async {
+                          final confirmationController = TextEditingController();
+                          final confirmation = await showDialog<String>(
+                            context: context,
+                            builder: (dialogContext) => AlertDialog(
+                              title: const Text('Confirm delivery'),
+                              content: TextField(
+                                controller: confirmationController,
+                                minLines: 2,
+                                maxLines: 4,
+                                decoration: const InputDecoration(
+                                  labelText: 'Delivery confirmation',
+                                  hintText: 'Who received the order and where?',
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dialogContext),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.pop(
+                                    dialogContext,
+                                    confirmationController.text.trim(),
+                                  ),
+                                  child: const Text('Confirm'),
+                                ),
+                              ],
+                            ),
+                          );
+                          confirmationController.dispose();
+                          if (confirmation != null && confirmation.length >= 3) {
+                            await controller.completeTransportRequest(confirmation);
+                          }
+                        },
                       )
                     else if (controller.transportRequests.isNotEmpty)
                       ConstrainedBox(
@@ -1272,6 +1320,7 @@ class _TransportRequestCard extends StatelessWidget {
     this.active = false,
     this.onAccept,
     this.onStart,
+    this.onArrive,
     this.onComplete,
   });
 
@@ -1279,6 +1328,7 @@ class _TransportRequestCard extends StatelessWidget {
   final bool active;
   final VoidCallback? onAccept;
   final VoidCallback? onStart;
+  final VoidCallback? onArrive;
   final VoidCallback? onComplete;
 
   @override
@@ -1317,15 +1367,21 @@ class _TransportRequestCard extends StatelessWidget {
             child: active
                 ? request['status'] == 'in_transit'
                     ? TextButton.icon(
-                        onPressed: onComplete,
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: const Text('Mark delivered'),
+                        onPressed: onArrive,
+                        icon: const Icon(Icons.place_outlined),
+                        label: const Text('Mark arrived'),
                       )
-                    : FilledButton.tonalIcon(
-                        onPressed: onStart,
-                        icon: const Icon(Icons.local_shipping_outlined),
-                        label: const Text('Start delivery'),
-                      )
+                    : request['status'] == 'arrived'
+                        ? FilledButton.tonalIcon(
+                            onPressed: onComplete,
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('Confirm delivery'),
+                          )
+                        : FilledButton.tonalIcon(
+                            onPressed: onStart,
+                            icon: const Icon(Icons.local_shipping_outlined),
+                            label: const Text('Start delivery'),
+                          )
                 : FilledButton.tonal(
                     onPressed: onAccept,
                     child: const Text('Accept request'),
