@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\DriverProfile;
 use App\Models\Farm;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
