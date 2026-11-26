@@ -65,7 +65,7 @@ class TransportRequestController extends Controller
         $activeRequest = TransportRequest::query()
             ->with(['requester:id,name,phone', 'driver.user:id,name,phone'])
             ->where('driver_profile_id', $driver->id)
-            ->where('status', 'accepted')
+            ->whereIn('status', ['accepted', 'in_transit', 'arrived'])
             ->latest()
             ->first();
         $isOnline = $driver->available
