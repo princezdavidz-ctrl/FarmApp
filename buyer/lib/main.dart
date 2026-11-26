@@ -294,12 +294,14 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
   }
 
   Future<void> _openNotifications() async {
-    await Navigator.of(context).push(
+    final openDeliveries = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => BuyerNotificationsPage(api: widget.api, language: widget.language),
       ),
     );
-    if (mounted) unawaited(_refreshDeliveries(showError: false));
+    if (!mounted) return;
+    if (openDeliveries == true) _selectPage(1);
+    unawaited(_refreshDeliveries(showError: false));
   }
 
   void _selectPage(int page) {
@@ -1639,7 +1641,7 @@ class _BuyerNotificationsPageState extends State<BuyerNotificationsPage> {
     if (!mounted) return;
     if (item.type.startsWith('delivery') || item.type == 'driver_assigned' ||
         item.type.startsWith('inquiry_')) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -1691,7 +1693,7 @@ class _BuyerNotificationsPageState extends State<BuyerNotificationsPage> {
               return Card(
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: item.isRead ? Colors.grey.shade200 : _brand.withValues(alpha: .12),
+                    backgroundColor: item.isRead ? Colors.grey.shade200 : _brand.withOpacity(.12),
                     child: Icon(
                       item.type.contains('delivery') || item.type == 'driver_assigned'
                           ? Icons.local_shipping_outlined
