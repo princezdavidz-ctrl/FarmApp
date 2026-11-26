@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BuyerNotification;
 use App\Models\DriverProfile;
 use App\Models\Farm;
 use App\Models\User;
@@ -300,6 +301,24 @@ class PigMarketplaceApiTest extends TestCase
                 'status' => 'accepted',
             ])
             ->assertOk();
+
+        $notificationId = BuyerNotification::query()
+            ->where('buyer_user_id', $buyer->id)
+            ->where('type', 'inquiry_accepted')
+            ->value('id');
+        $this->assertNotNull($notificationId);
+
+        $this->actingAs($buyer, 'sanctum')
+            ->getJson('/api/v1/marketplace/buyer/notifications')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('data.0.type', 'inquiry_accepted')
+            ->assertJsonPath('data.0.title', 'Farm accepted your request');
+
+        $this->actingAs($buyer, 'sanctum')
+            ->patchJson("/api/v1/marketplace/buyer/notifications/{$notificationId}/read")
+            ->assertOk()
+            ->assertJsonStructure(['data' => ['id', 'read_at']]);
 
         $transport = $this->actingAs($owner, 'sanctum')
             ->postJson("/api/v1/farms/{$farm->id}/transport-requests", [
