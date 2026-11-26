@@ -269,10 +269,10 @@ class PigMarketplaceController extends Controller
                 'driver_name' => $driverUser?->name,
                 'driver_phone' => $driverUser?->phone,
                 'driver_latitude' => $locationIsFresh && in_array($transport->status, ['accepted', 'in_transit'], true)
-                    ? $driver?->latitude
+                    ? (float) $driver->latitude
                     : null,
                 'driver_longitude' => $locationIsFresh && in_array($transport->status, ['accepted', 'in_transit'], true)
-                    ? $driver?->longitude
+                    ? (float) $driver->longitude
                     : null,
                 'driver_location_updated_at' => $locationIsFresh && in_array($transport->status, ['accepted', 'in_transit'], true)
                     ? $driver?->location_updated_at?->toIso8601String()
