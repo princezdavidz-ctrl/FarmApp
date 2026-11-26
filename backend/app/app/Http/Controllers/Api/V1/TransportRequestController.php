@@ -7,6 +7,8 @@ use App\Models\DriverProfile;
 use App\Models\Farm;
 use App\Models\SupplierProfile;
 use App\Models\TransportRequest;
+use App\Models\BuyerNotification;
+use App\Models\PigInquiry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -156,8 +158,19 @@ class TransportRequestController extends Controller
 
         abort_unless($accepted, 409, 'This request is no longer available or does not match your vehicle and location.');
 
+        $acceptedRequest = $transportRequest->fresh()->load('driver.user:id,name,phone');
+        if ($acceptedRequest->pig_inquiry_id !== null) {
+            BuyerNotification::notifyInquiry(
+                PigInquiry::find($acceptedRequest->pig_inquiry_id),
+                'driver_assigned',
+                'Driver assigned',
+                'A driver has accepted your delivery and will begin the journey soon.',
+                'delivery',
+            );
+        }
+
         return response()->json([
-            'data' => $this->requestData($transportRequest->fresh()->load('driver.user:id,name,phone')),
+            'data' => $this->requestData($acceptedRequest),
         ]);
     }
 
@@ -202,6 +215,22 @@ class TransportRequestController extends Controller
             }
         }
         $transportRequest->update($updates);
+        if ($transportRequest->pig_inquiry_id !== null) {
+            [$type, $title, $body] = match ($data['status']) {
+                'in_transit' => ['delivery_in_transit', 'Delivery on the way', 'Your order has left the farm and is on its way.'],
+                'arrived' => ['delivery_arrived', 'Driver has arrived', 'Your driver has arrived at the delivery destination.'],
+                'completed' => ['delivery_completed', 'Delivery completed', 'Your order was marked delivered. Review the delivery confirmation in your delivery details.'],
+                'cancelled' => ['delivery_cancelled', 'Delivery cancelled', 'The transport request was cancelled.'],
+                default => ['delivery_update', 'Delivery update', 'Your delivery status has changed.'],
+            };
+            BuyerNotification::notifyInquiry(
+                PigInquiry::find($transportRequest->pig_inquiry_id),
+                $type,
+                $title,
+                $body,
+                'delivery',
+            );
+        }
 
         return response()->json(['data' => $this->requestData($transportRequest->fresh())]);
     }

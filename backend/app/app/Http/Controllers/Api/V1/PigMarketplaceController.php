@@ -7,6 +7,7 @@ use App\Http\Requests\Marketplace\StorePigInquiryRequest;
 use App\Http\Requests\Marketplace\StorePigListingRequest;
 use App\Models\Animal;
 use App\Models\Buyer;
+use App\Models\BuyerNotification;
 use App\Models\Farm;
 use App\Models\PigInquiry;
 use App\Models\PigListing;
@@ -155,6 +156,18 @@ class PigMarketplaceController extends Controller
         abort_unless((int) $inquiry->pig_listing_id === (int) $listing->id, 404);
         $data = $request->validate(['status' => ['required', Rule::in(['pending', 'accepted', 'rejected', 'completed'])]]);
         $inquiry->update($data);
+        if ($inquiry->buyer_user_id !== null) {
+            $accepted = $data['status'] === 'accepted';
+            BuyerNotification::notifyInquiry(
+                $inquiry->fresh(),
+                $accepted ? 'inquiry_accepted' : 'inquiry_status',
+                $accepted ? 'Farm accepted your request' : 'Request status updated',
+                $accepted
+                    ? 'The farm accepted your purchase request. Delivery arrangements can now be made.'
+                    : 'The farm updated the status of your purchase request to '.$data['status'].'.',
+                'delivery',
+            );
+        }
 
         return response()->json(['data' => $this->inquiryData($inquiry->fresh())]);
     }

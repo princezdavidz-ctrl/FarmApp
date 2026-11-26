@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BuyerNotificationController;
 use App\Http\Controllers\Api\V1\CrmAdminController;
 use App\Http\Controllers\Api\V1\CrmAuditLogController;
 use App\Http\Controllers\Api\V1\CrmCustomerEventController;
@@ -81,6 +82,8 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('marketplace/buyer/deliveries', [PigMarketplaceController::class, 'buyerDeliveries']);
+        Route::get('marketplace/buyer/notifications', [BuyerNotificationController::class, 'index']);
+        Route::patch('marketplace/buyer/notifications/{notification}/read', [BuyerNotificationController::class, 'markAsRead']);
         Route::post('/auth/push-token', [PushDeviceController::class, 'store']);
         Route::delete('/auth/push-token', [PushDeviceController::class, 'destroy']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
