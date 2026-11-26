@@ -289,7 +289,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     });
   }
 
-  void _openNotifications() {
+  void _openDeliveries() {
     _selectPage(1);
   }
 
@@ -378,9 +378,9 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
             onPressed: _openSearch,
           ),
           IconButton(
-            tooltip: _copy(widget.language, 'notifications'),
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: _openNotifications,
+            tooltip: _copy(widget.language, 'delivery'),
+            icon: const Icon(Icons.local_shipping_outlined),
+            onPressed: _openDeliveries,
           ),
         ],
       ),
