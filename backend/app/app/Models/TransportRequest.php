@@ -10,6 +10,7 @@ class TransportRequest extends Model
     protected $fillable = [
         'requester_user_id', 'farm_id', 'supplier_profile_id', 'driver_profile_id', 'pig_inquiry_id',
         'service_type', 'vehicle_type', 'pickup_latitude', 'pickup_longitude',
+        'arrived_at', 'completed_at', 'delivery_confirmation',
         'pickup_address', 'destination_latitude', 'destination_longitude',
         'destination_address', 'load_description', 'radius_km', 'status',
     ];
@@ -22,6 +23,8 @@ class TransportRequest extends Model
             'destination_latitude' => 'float',
             'destination_longitude' => 'float',
             'radius_km' => 'integer',
+            'arrived_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 
