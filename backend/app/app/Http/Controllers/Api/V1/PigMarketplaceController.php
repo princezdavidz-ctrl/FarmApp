@@ -261,6 +261,9 @@ class PigMarketplaceController extends Controller
             'transport' => $transport === null ? null : [
                 'id' => (string) $transport->id,
                 'status' => $transport->status,
+                'arrived_at' => $transport->arrived_at?->toIso8601String(),
+                'completed_at' => $transport->completed_at?->toIso8601String(),
+                'delivery_confirmation' => $transport->delivery_confirmation,
                 'vehicle_type' => $transport->vehicle_type,
                 'pickup_address' => $transport->pickup_address,
                 'destination_address' => $transport->destination_address,
