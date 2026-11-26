@@ -293,6 +293,17 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     _selectPage(1);
   }
 
+  Future<void> _openNotifications() async {
+    final openDeliveries = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BuyerNotificationsPage(api: widget.api, language: widget.language),
+      ),
+    );
+    if (!mounted) return;
+    if (openDeliveries == true) _selectPage(1);
+    unawaited(_refreshDeliveries(showError: false));
+  }
+
   void _selectPage(int page) {
     if (_page == page) return;
     setState(() => _page = page);
@@ -381,6 +392,11 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
             tooltip: _copy(widget.language, 'delivery'),
             icon: const Icon(Icons.local_shipping_outlined),
             onPressed: _openDeliveries,
+          ),
+          IconButton(
+            tooltip: _copy(widget.language, 'notifications'),
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: _openNotifications,
           ),
         ],
       ),
@@ -1522,6 +1538,28 @@ class BuyerMarketplaceApi {
     }
   }
 
+  Future<List<BuyerNotificationItem>> fetchBuyerNotifications() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/marketplace/buyer/notifications',
+      );
+      final rows = response.data?['data'] as List<dynamic>? ?? const [];
+      return rows
+          .map((row) => BuyerNotificationItem.fromJson(row as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (error) {
+      throw StateError(_errorMessage(error));
+    }
+  }
+
+  Future<void> markBuyerNotificationRead(String id) async {
+    try {
+      await _dio.patch('/marketplace/buyer/notifications/$id/read');
+    } on DioException catch (error) {
+      throw StateError(_errorMessage(error));
+    }
+  }
+
   String _errorMessage(DioException error) {
     final responseMessage = error.response?.data is Map<String, dynamic>
         ? (error.response!.data as Map<String, dynamic>)['message']
@@ -1531,6 +1569,157 @@ class BuyerMarketplaceApi {
     }
     return error.message ?? 'Unable to reach the marketplace.';
   }
+}
+
+class BuyerNotificationItem {
+  const BuyerNotificationItem({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.body,
+    required this.createdAt,
+    required this.readAt,
+  });
+
+  final String id;
+  final String type;
+  final String title;
+  final String body;
+  final DateTime? createdAt;
+  final DateTime? readAt;
+
+  bool get isRead => readAt != null;
+
+  factory BuyerNotificationItem.fromJson(Map<String, dynamic> json) =>
+      BuyerNotificationItem(
+        id: '${json['id'] ?? ''}',
+        type: '${json['type'] ?? ''}',
+        title: '${json['title'] ?? 'Update'}',
+        body: '${json['body'] ?? ''}',
+        createdAt: DateTime.tryParse('${json['created_at'] ?? ''}'),
+        readAt: DateTime.tryParse('${json['read_at'] ?? ''}'),
+      );
+}
+
+class BuyerNotificationsPage extends StatefulWidget {
+  const BuyerNotificationsPage({
+    required this.api,
+    required this.language,
+    super.key,
+  });
+
+  final BuyerMarketplaceApi api;
+  final String language;
+
+  @override
+  State<BuyerNotificationsPage> createState() => _BuyerNotificationsPageState();
+}
+
+class _BuyerNotificationsPageState extends State<BuyerNotificationsPage> {
+  late Future<List<BuyerNotificationItem>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = widget.api.fetchBuyerNotifications();
+  }
+
+  Future<void> _refresh() async {
+    final future = widget.api.fetchBuyerNotifications();
+    setState(() => _future = future);
+    await future;
+  }
+
+  Future<void> _open(BuyerNotificationItem item) async {
+    if (!item.isRead) {
+      await widget.api.markBuyerNotificationRead(item.id);
+      if (!mounted) return;
+      setState(() {
+        _future = widget.api.fetchBuyerNotifications();
+      });
+    }
+    if (!mounted) return;
+    if (item.type.startsWith('delivery') || item.type == 'driver_assigned' ||
+        item.type.startsWith('inquiry_')) {
+      Navigator.of(context).pop(true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: Text(_copy(widget.language, 'notifications')),
+    ),
+    body: RefreshIndicator(
+      onRefresh: _refresh,
+      child: FutureBuilder<List<BuyerNotificationItem>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              children: [
+                const SizedBox(height: 100),
+                const Icon(Icons.cloud_off_outlined, size: 44),
+                const SizedBox(height: 12),
+                Center(child: Text('${snapshot.error}')),
+                Center(child: TextButton(onPressed: _refresh, child: const Text('Retry'))),
+              ],
+            );
+          }
+          final items = snapshot.data ?? const <BuyerNotificationItem>[];
+          if (items.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 120),
+                Icon(Icons.notifications_none, size: 48),
+                SizedBox(height: 12),
+                Center(child: Text('You are all caught up.')),
+              ],
+            );
+          }
+          return ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return Card(
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: item.isRead ? Colors.grey.shade200 : _brand.withOpacity(.12),
+                    child: Icon(
+                      item.type.contains('delivery') || item.type == 'driver_assigned'
+                          ? Icons.local_shipping_outlined
+                          : Icons.shopping_bag_outlined,
+                      color: _brand,
+                    ),
+                  ),
+                  title: Text(item.title, style: TextStyle(fontWeight: item.isRead ? FontWeight.normal : FontWeight.bold)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.body),
+                      if (item.createdAt != null)
+                        Text(MaterialLocalizations.of(context).formatMediumDate(item.createdAt!.toLocal())),
+                    ],
+                  ),
+                  trailing: item.isRead ? null : const Icon(Icons.circle, size: 9, color: _brand),
+                  onTap: () => _open(item),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    ),
+  );
 }
 
 class BuyerAccount {
@@ -2532,6 +2721,51 @@ class _FormMessage extends StatelessWidget {
   );
 }
 
+class _DeliveryMilestones extends StatelessWidget {
+  const _DeliveryMilestones({required this.status});
+  final String? status;
+
+  @override
+  Widget build(BuildContext context) {
+    const stages = ['accepted', 'in_transit', 'arrived', 'completed'];
+    final current = stages.indexOf(status ?? '');
+    if (current < 0) return const SizedBox.shrink();
+    const labels = ['Driver assigned', 'On the way', 'Arrived', 'Delivered'];
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Delivery progress', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(stages.length, (index) {
+              final done = index <= current;
+              return Expanded(
+                child: Column(
+                  children: [
+                    Container(
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: done ? _brand : const Color(0xFFDCE7DC),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(labels[index], textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 10, color: done ? _brand : Colors.grey)),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DeliveryCard extends StatelessWidget {
   const _DeliveryCard({required this.delivery, required this.language});
   final BuyerDelivery delivery;
@@ -2617,6 +2851,7 @@ class _DeliveryCard extends StatelessWidget {
                   ),
                 ],
               ),
+              _DeliveryMilestones(status: delivery.transportStatus),
               if (delivery.driverName?.isNotEmpty == true)
                 Text('Driver: ${delivery.driverName}'),
               if (delivery.driverPhone?.isNotEmpty == true)
