@@ -22,7 +22,7 @@ class ModulePage extends StatelessWidget {
         leading: IconButton(
           tooltip: 'Open menu',
           icon: const Icon(Icons.menu),
-          onPressed: () => navigationScaffoldKey.currentState?.openDrawer(),
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
       body: ListView(
