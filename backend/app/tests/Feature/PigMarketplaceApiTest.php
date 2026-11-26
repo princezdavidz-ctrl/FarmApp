@@ -374,14 +374,39 @@ class PigMarketplaceApiTest extends TestCase
         $this->actingAs($driverUser, 'sanctum')
             ->postJson("/api/v1/transport-requests/{$transport}/status", [
                 'status' => 'completed',
+                'delivery_confirmation' => 'Delivered to buyer at the agreed address.',
+            ])
+            ->assertStatus(409);
+
+        $this->actingAs($driverUser, 'sanctum')
+            ->postJson("/api/v1/transport-requests/{$transport}/status", [
+                'status' => 'arrived',
             ])
             ->assertOk()
-            ->assertJsonPath('data.status', 'completed');
+            ->assertJsonPath('data.status', 'arrived')
+            ->assertJsonStructure(['data' => ['arrived_at']]);
+
+        $this->actingAs($driverUser, 'sanctum')
+            ->postJson("/api/v1/transport-requests/{$transport}/status", [
+                'status' => 'completed',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('delivery_confirmation');
+
+        $this->actingAs($driverUser, 'sanctum')
+            ->postJson("/api/v1/transport-requests/{$transport}/status", [
+                'status' => 'completed',
+                'delivery_confirmation' => 'Delivered to buyer at the agreed address.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'completed')
+            ->assertJsonPath('data.delivery_confirmation', 'Delivered to buyer at the agreed address.');
 
         $this->actingAs($buyer, 'sanctum')
             ->getJson('/api/v1/marketplace/buyer/deliveries')
             ->assertOk()
             ->assertJsonPath('data.0.transport.status', 'completed')
+            ->assertJsonPath('data.0.transport.delivery_confirmation', 'Delivered to buyer at the agreed address.')
             ->assertJsonPath('data.0.transport.driver_latitude', null);
     }
 
