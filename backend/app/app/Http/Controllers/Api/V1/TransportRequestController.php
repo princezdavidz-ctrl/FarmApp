@@ -164,7 +164,7 @@ class TransportRequestController extends Controller
     public function updateStatus(Request $request, TransportRequest $transportRequest): JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['cancelled', 'completed'])],
+            'status' => ['required', Rule::in(['cancelled', 'in_transit', 'completed'])],
         ]);
         $user = $request->user();
         if ($data['status'] === 'cancelled') {
@@ -174,7 +174,7 @@ class TransportRequestController extends Controller
             $driver = $user->driverProfile()->firstOrFail();
             abort_unless(
                 $transportRequest->driver_profile_id === $driver->id
-                    && $transportRequest->status === 'accepted',
+                    && in_array($transportRequest->status, ['accepted', 'in_transit'], true),
                 404,
             );
         }
@@ -196,13 +196,28 @@ class TransportRequestController extends Controller
             'destination_address' => ['required', 'string', 'max:255'],
             'load_description' => ['nullable', 'string', 'max:255'],
             'radius_km' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'pig_inquiry_id' => ['nullable', 'integer', 'exists:pig_inquiries,id'],
         ]);
+        $inquiryId = $data['pig_inquiry_id'] ?? null;
+        unset($data['pig_inquiry_id']);
+        if ($inquiryId !== null) {
+            abort_unless(isset($owner['farm_id']), 422, 'Only a farm transport request can be linked to a buyer inquiry.');
+            $inquiry = \App\Models\PigInquiry::query()->with('listing')->findOrFail($inquiryId);
+            abort_unless(
+                $inquiry->status === 'accepted'
+                    && (int) $inquiry->listing?->farm_id === (int) $owner['farm_id']
+                    && ! $inquiry->transportRequest()->exists(),
+                409,
+                'The buyer inquiry must be accepted by this farm and must not already have transport assigned.',
+            );
+        }
         $transportRequest = TransportRequest::create([
             ...$data,
             ...$owner,
             'requester_user_id' => $request->user()->id,
             'radius_km' => $data['radius_km'] ?? 25,
             'status' => 'open',
+            'pig_inquiry_id' => $inquiryId,
         ]);
 
         return response()->json(['data' => $this->requestData($transportRequest)], 201);
@@ -247,6 +262,19 @@ class TransportRequestController extends Controller
             'radius_km' => $transportRequest->radius_km,
             'distance_km' => $distance === null ? null : round($distance, 1),
             'status' => $transportRequest->status,
+            'pig_inquiry_id' => $transportRequest->pig_inquiry_id === null ? null : (string) $transportRequest->pig_inquiry_id,
+            'driver_latitude' => in_array($transportRequest->status, ['accepted', 'in_transit'], true)
+                && $transportRequest->driver?->location_updated_at?->greaterThanOrEqualTo(now()->subMinutes(5))
+                    ? $transportRequest->driver->latitude
+                    : null,
+            'driver_longitude' => in_array($transportRequest->status, ['accepted', 'in_transit'], true)
+                && $transportRequest->driver?->location_updated_at?->greaterThanOrEqualTo(now()->subMinutes(5))
+                    ? $transportRequest->driver->longitude
+                    : null,
+            'driver_location_updated_at' => in_array($transportRequest->status, ['accepted', 'in_transit'], true)
+                && $transportRequest->driver?->location_updated_at?->greaterThanOrEqualTo(now()->subMinutes(5))
+                    ? $transportRequest->driver->location_updated_at?->toIso8601String()
+                    : null,
             'created_at' => $transportRequest->created_at?->toIso8601String(),
             'driver_profile_id' => $transportRequest->driver_profile_id === null
                 ? null

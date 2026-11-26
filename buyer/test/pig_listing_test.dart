@@ -87,6 +87,36 @@ void main() {
     expect(delivery.imageUrl, 'https://api.example.test/storage/pig.jpg');
   });
 
+  test('parses linked transport status, assigned driver and fresh coordinates', () {
+    final delivery = BuyerDelivery.fromJson({
+      'id': '99',
+      'buyer_name': 'Buyer',
+      'phone': '+254700000001',
+      'quantity': 1,
+      'status': 'accepted',
+      'listing': {'title': 'Pig order', 'farm_name': 'Farm'},
+      'transport': {
+        'id': '301',
+        'status': 'in_transit',
+        'driver_name': 'Driver One',
+        'driver_phone': '+254700000002',
+        'pickup_address': 'Farm gate',
+        'destination_address': 'Buyer home',
+        'driver_latitude': -1.2864,
+        'driver_longitude': 36.8172,
+      },
+    });
+
+    expect(delivery.hasTransport, isTrue);
+    expect(delivery.transportStatus, 'in_transit');
+    expect(delivery.driverName, 'Driver One');
+    expect(delivery.driverPhone, '+254700000002');
+    expect(delivery.pickupAddress, 'Farm gate');
+    expect(delivery.destinationAddress, 'Buyer home');
+    expect(delivery.driverLatitude, -1.2864);
+    expect(delivery.driverLongitude, 36.8172);
+  });
+
   test('filters listings by search and breed and sorts by price', () {
     final results = filterAndSortListings(
       listings,

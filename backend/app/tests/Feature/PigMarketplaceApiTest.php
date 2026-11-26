@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\DriverProfile;
 use App\Models\Farm;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -270,6 +271,118 @@ class PigMarketplaceApiTest extends TestCase
             ->getJson('/api/v1/marketplace/buyer/deliveries')
             ->assertOk()
             ->assertJsonPath('data', []);
+    }
+
+    public function test_buyer_can_follow_linked_transport_from_farm_acceptance_through_driver_completion(): void
+    {
+        [$owner, $farm] = $this->farmWithOwner();
+        $buyer = User::factory()->create(['role' => 'buyer']);
+        $listing = $farm->pigListings()->create([
+            'title' => 'Transport test pigs',
+            'breed' => 'Large White',
+            'quantity' => 4,
+            'price_per_pig' => 18000,
+            'currency' => 'KES',
+            'created_by' => $owner->id,
+        ]);
+
+        $inquiryId = $this->actingAs($buyer, 'sanctum')
+            ->postJson("/api/v1/marketplace/pigs/{$listing->id}/buyer-inquiries", [
+                'buyer_name' => $buyer->name,
+                'phone' => '+254711000111',
+                'quantity' => 2,
+            ])
+            ->assertCreated()
+            ->json('data.id');
+
+        $this->actingAs($owner, 'sanctum')
+            ->patchJson("/api/v1/farms/{$farm->id}/pig-listings/{$listing->id}/inquiries/{$inquiryId}", [
+                'status' => 'accepted',
+            ])
+            ->assertOk();
+
+        $transport = $this->actingAs($owner, 'sanctum')
+            ->postJson("/api/v1/farms/{$farm->id}/transport-requests", [
+                'service_type' => 'herd',
+                'vehicle_type' => 'Livestock lorry',
+                'pickup_latitude' => -1.2864,
+                'pickup_longitude' => 36.8172,
+                'pickup_address' => 'Nakuru Farm',
+                'destination_latitude' => -1.2921,
+                'destination_longitude' => 36.8219,
+                'destination_address' => 'Buyer delivery point',
+                'load_description' => '2 pigs for inquiry '.$inquiryId,
+                'pig_inquiry_id' => $inquiryId,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.pig_inquiry_id', (string) $inquiryId)
+            ->json('data.id');
+
+        $this->actingAs($owner, 'sanctum')
+            ->postJson("/api/v1/farms/{$farm->id}/transport-requests", [
+                'service_type' => 'herd',
+                'vehicle_type' => 'Livestock lorry',
+                'pickup_latitude' => -1.2864,
+                'pickup_longitude' => 36.8172,
+                'pickup_address' => 'Nakuru Farm',
+                'destination_latitude' => -1.2921,
+                'destination_longitude' => 36.8219,
+                'destination_address' => 'Buyer delivery point',
+                'pig_inquiry_id' => $inquiryId,
+            ])
+            ->assertStatus(409);
+
+        $driverUser = User::factory()->create(['role' => 'animalDriver']);
+        $driver = DriverProfile::create([
+            'user_id' => $driverUser->id,
+            'reference' => fake()->uuid(),
+            'driver_license_number' => 'DL-'.fake()->unique()->numerify('#####'),
+            'county' => 'Nakuru',
+            'service_types' => 'herd,supplies',
+            'vehicle_type' => 'Livestock lorry',
+            'vehicle_registration_number' => 'KCC'.fake()->unique()->numerify('###').'A',
+            'capacity_description' => 'Livestock transport',
+            'status' => 'approved',
+            'subscription_expires_at' => now()->addDays(30),
+            'latitude' => -1.2864,
+            'longitude' => 36.8172,
+            'available' => true,
+            'location_updated_at' => now(),
+        ]);
+
+        $this->actingAs($driverUser, 'sanctum')
+            ->postJson("/api/v1/animal-drivers/requests/{$transport}/accept")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'accepted');
+
+        $this->actingAs($driverUser, 'sanctum')
+            ->postJson("/api/v1/transport-requests/{$transport}/status", [
+                'status' => 'in_transit',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'in_transit');
+
+        $this->actingAs($buyer, 'sanctum')
+            ->getJson('/api/v1/marketplace/buyer/deliveries')
+            ->assertOk()
+            ->assertJsonPath('data.0.transport.id', (string) $transport)
+            ->assertJsonPath('data.0.transport.status', 'in_transit')
+            ->assertJsonPath('data.0.transport.driver_name', $driverUser->name)
+            ->assertJsonPath('data.0.transport.driver_latitude', -1.2864)
+            ->assertJsonPath('data.0.transport.destination_address', 'Buyer delivery point');
+
+        $this->actingAs($driverUser, 'sanctum')
+            ->postJson("/api/v1/transport-requests/{$transport}/status", [
+                'status' => 'completed',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'completed');
+
+        $this->actingAs($buyer, 'sanctum')
+            ->getJson('/api/v1/marketplace/buyer/deliveries')
+            ->assertOk()
+            ->assertJsonPath('data.0.transport.status', 'completed')
+            ->assertJsonPath('data.0.transport.driver_latitude', null);
     }
 
     public function test_listing_for_a_herd_animal_exposes_its_saved_photo_to_buyers(): void

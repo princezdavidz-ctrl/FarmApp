@@ -63,7 +63,7 @@ class PigMarketplaceController extends Controller
                 $query->where('buyer_id', $buyer->id)
                     ->orWhere('buyer_user_id', $request->user()->id);
             })
-            ->with(['listing.farm:id,name,location'])
+            ->with(['listing.farm:id,name,location', 'listing.animal', 'transportRequest.driver.user:id,name,phone'])
             ->latest()
             ->limit(200)
             ->get();
@@ -236,6 +236,10 @@ class PigMarketplaceController extends Controller
     private function buyerDeliveryData(PigInquiry $inquiry): array
     {
         $listing = $inquiry->listing;
+        $transport = $inquiry->transportRequest;
+        $driver = $transport?->driver;
+        $driverUser = $driver?->user;
+        $locationIsFresh = $driver?->location_updated_at?->greaterThanOrEqualTo(now()->subMinutes(5)) ?? false;
 
         return [
             ...$this->inquiryData($inquiry),
@@ -253,6 +257,26 @@ class PigMarketplaceController extends Controller
                 'location' => $listing->location,
                 'farm_name' => $listing->farm?->name,
                 'farm_location' => $listing->farm?->location,
+            ],
+            'transport' => $transport === null ? null : [
+                'id' => (string) $transport->id,
+                'status' => $transport->status,
+                'vehicle_type' => $transport->vehicle_type,
+                'pickup_address' => $transport->pickup_address,
+                'destination_address' => $transport->destination_address,
+                'created_at' => $transport->created_at?->toIso8601String(),
+                'updated_at' => $transport->updated_at?->toIso8601String(),
+                'driver_name' => $driverUser?->name,
+                'driver_phone' => $driverUser?->phone,
+                'driver_latitude' => $locationIsFresh && in_array($transport->status, ['accepted', 'in_transit'], true)
+                    ? (float) $driver->latitude
+                    : null,
+                'driver_longitude' => $locationIsFresh && in_array($transport->status, ['accepted', 'in_transit'], true)
+                    ? (float) $driver->longitude
+                    : null,
+                'driver_location_updated_at' => $locationIsFresh && in_array($transport->status, ['accepted', 'in_transit'], true)
+                    ? $driver?->location_updated_at?->toIso8601String()
+                    : null,
             ],
         ];
     }

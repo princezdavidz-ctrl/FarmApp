@@ -325,9 +325,21 @@ class DriverController extends ChangeNotifier {
     });
   }
 
+  Future<void> startTransportRequest() async {
+    final request = activeTransportRequest;
+    if (request == null || request['status'] != 'accepted') return;
+    await _run(() async {
+      final response = await api.updateTransportRequestStatus(
+        request['id'].toString(),
+        'in_transit',
+      );
+      activeTransportRequest = _map(response['data']);
+    });
+  }
+
   Future<void> completeTransportRequest() async {
     final request = activeTransportRequest;
-    if (request == null) return;
+    if (request == null || request['status'] != 'in_transit') return;
     await _run(() async {
       await api.updateTransportRequestStatus(
         request['id'].toString(),
@@ -1212,6 +1224,7 @@ class _HomePageState extends State<HomePage> {
                       _TransportRequestCard(
                         request: active,
                         active: true,
+                        onStart: controller.startTransportRequest,
                         onComplete: controller.completeTransportRequest,
                       )
                     else if (controller.transportRequests.isNotEmpty)
@@ -1258,12 +1271,14 @@ class _TransportRequestCard extends StatelessWidget {
     required this.request,
     this.active = false,
     this.onAccept,
+    this.onStart,
     this.onComplete,
   });
 
   final Map<String, dynamic> request;
   final bool active;
   final VoidCallback? onAccept;
+  final VoidCallback? onStart;
   final VoidCallback? onComplete;
 
   @override
@@ -1300,11 +1315,17 @@ class _TransportRequestCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: active
-                ? TextButton.icon(
-                    onPressed: onComplete,
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('Mark complete'),
-                  )
+                ? request['status'] == 'in_transit'
+                    ? TextButton.icon(
+                        onPressed: onComplete,
+                        icon: const Icon(Icons.check_circle_outline),
+                        label: const Text('Mark delivered'),
+                      )
+                    : FilledButton.tonalIcon(
+                        onPressed: onStart,
+                        icon: const Icon(Icons.local_shipping_outlined),
+                        label: const Text('Start delivery'),
+                      )
                 : FilledButton.tonal(
                     onPressed: onAccept,
                     child: const Text('Accept request'),
