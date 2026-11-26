@@ -202,7 +202,7 @@ class TransportRequestController extends Controller
         unset($data['pig_inquiry_id']);
         if ($inquiryId !== null) {
             abort_unless(isset($owner['farm_id']), 422, 'Only a farm transport request can be linked to a buyer inquiry.');
-            $inquiry = \\App\\Models\\PigInquiry::query()->with('listing')->findOrFail($inquiryId);
+            $inquiry = \App\Models\PigInquiry::query()->with('listing')->findOrFail($inquiryId);
             abort_unless(
                 $inquiry->status === 'accepted'
                     && (int) $inquiry->listing?->farm_id === (int) $owner['farm_id']
