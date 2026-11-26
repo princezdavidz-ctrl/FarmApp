@@ -644,22 +644,22 @@ class _StatCard extends StatelessWidget {
     return Card(
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radius),
+          borderRadius: BorderRadius.circular(22),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [color.withValues(alpha: 0.08), AppColors.surface],
+            colors: [color.withValues(alpha: 0.065), AppColors.surface],
           ),
-          border: Border.all(color: color.withValues(alpha: 0.12)),
+          border: Border.all(color: color.withValues(alpha: 0.10)),
         ),
-        padding: const EdgeInsets.all(AppDimensions.spacingMedium),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(9),
+                  padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(12),
