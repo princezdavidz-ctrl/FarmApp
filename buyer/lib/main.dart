@@ -1585,6 +1585,13 @@ class BuyerDelivery {
     this.ageWeeks,
     this.location,
     this.message,
+    this.transportStatus,
+    this.driverName,
+    this.driverPhone,
+    this.pickupAddress,
+    this.destinationAddress,
+    this.driverLatitude,
+    this.driverLongitude,
   });
 
   final String id;
@@ -1603,9 +1610,19 @@ class BuyerDelivery {
   final int? ageWeeks;
   final String? location;
   final String? message;
+  final String? transportStatus;
+  final String? driverName;
+  final String? driverPhone;
+  final String? pickupAddress;
+  final String? destinationAddress;
+  final double? driverLatitude;
+  final double? driverLongitude;
+
+  bool get hasTransport => transportStatus != null;
 
   factory BuyerDelivery.fromJson(Map<String, dynamic> json) {
     final listing = json['listing'] as Map<String, dynamic>? ?? const {};
+    final transport = json['transport'] as Map<String, dynamic>?;
     return BuyerDelivery(
       id: '${json['id'] ?? ''}',
       buyerName: '${json['buyer_name'] ?? ''}',
@@ -1624,6 +1641,13 @@ class BuyerDelivery {
       location:
           listing['location'] as String? ?? listing['farm_location'] as String?,
       message: json['message'] as String?,
+      transportStatus: transport?['status'] as String?,
+      driverName: transport?['driver_name'] as String?,
+      driverPhone: transport?['driver_phone'] as String?,
+      pickupAddress: transport?['pickup_address'] as String?,
+      destinationAddress: transport?['destination_address'] as String?,
+      driverLatitude: (transport?['driver_latitude'] as num?)?.toDouble(),
+      driverLongitude: (transport?['driver_longitude'] as num?)?.toDouble(),
     );
   }
 }
