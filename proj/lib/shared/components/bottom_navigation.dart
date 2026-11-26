@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+final GlobalKey<ScaffoldState> navigationScaffoldKey = GlobalKey<ScaffoldState>();
+
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
     required this.selectedIndex,
